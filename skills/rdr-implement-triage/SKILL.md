@@ -191,18 +191,18 @@ Per `§preflight-shared` (gate 0 §repo-anchor first), plus RDR gating:
    configured context root (`/context/...`, `/rdr/evidence/...`), not
    the gitignored consumer-repo `_rdr/`. (The launch prompt path is resolved in
    gate 5 via the engine, not derived here.)
-2. `roborev status` exits 0 (else refuse; do **not** start the daemon).
-3. **Auto-review fires in linked worktrees.** Triage's spine is the
-   per-commit auto-reviews the `post-commit` hook produces; that hook
-   must run for commits made in the worktree, not just the primary
-   checkout. Confirm `git config core.hooksPath` resolves to a path under
-   the **common** git dir (`git rev-parse --git-common-dir`) and that
-   `<hooksPath>/post-commit` exists and is executable. If `core.hooksPath`
-   is unset/relative (so a linked worktree would resolve to its own
-   hookless git dir) or the hook is missing → refuse with
-   `stopped:worktree-autoreview-unconfirmed` (else triage would silently
-   find zero findings). Do not edit git config to fix it — surface it.
-4. `<RDR_PATH>` exists; read its `**Predecessors**:` field (one
+2. **Auto-review fires in linked worktrees.** Triage's spine is the
+   per-commit auto-reviews the roborev `post-commit` hook produces; that hook
+   must run for commits made in the worktree, not just the primary checkout.
+   Resolve the hook directory the same way roborev does: if
+   `git config --path core.hooksPath` is set, use it as absolute or resolve it
+   relative to the main checkout root (`dirname "$(cd "$(git rev-parse
+   --git-common-dir)" && pwd -P)"`); otherwise use
+   `<main-checkout>/.git/hooks`. Confirm `<hooksPath>/post-commit` exists,
+   is executable, and contains `roborev`. If not → refuse with
+   `stopped:worktree-autoreview-unconfirmed` (else triage would silently find
+   zero findings). Do not edit git config to fix it — surface it.
+3. `<RDR_PATH>` exists; read its `**Predecessors**:` field (one
    comma-separated line, may end with a period; absent → skip). Per entry,
    take the leading `cli/MMMM` ref (ignore any `(…)` gloss) and resolve its
    RDR via `<rdr-dir>/MMMM-*.md`. **The predecessor RDR is the source of
@@ -212,7 +212,7 @@ Per `§preflight-shared` (gate 0 §repo-anchor first), plus RDR gating:
    be absent (pre-convention RDRs) or formatted differently, and says
    nothing about whether the RDR is done. (RDRs live in the RDR docs repo,
    e.g. `process/rdr/cli/NNNN-slug.md`.)
-5. Resolve `LAUNCH_PROMPT` (inline body → `@<PROMPT_PATH>` → engine default).
+4. Resolve `LAUNCH_PROMPT` (inline body → `@<PROMPT_PATH>` → engine default).
    For the default, invoke `/rdr-implement --launch-prompt-path` via the Skill
    tool — it short-circuits to just the path. Pass the path (not the body)
    into the phase briefs. If a path (engine default or `@`) is unreadable →
@@ -466,9 +466,8 @@ Per `§resume-mechanics`. `--resume <RDR_PATH>`:
 | Condition | Action |
 |---|---|
 | Primary checkout dirty / no branch | Refuse (`§preflight-shared`). |
-| `roborev status` unhealthy | Refuse; surface. Do **not** start the daemon. |
 | Predecessor RDR `Status:` not `Implemented`/`Final` (or RDR missing) | Refuse; name it. Don't create a worktree. (Gate reads the predecessor RDR, not its `status.md`.) |
-| Worktree auto-review unconfirmed (hooksPath unset/relative or hook missing) | Refuse `stopped:worktree-autoreview-unconfirmed`; don't edit git config — surface it. |
+| Worktree auto-review unconfirmed (resolved post-commit hook missing, non-executable, or not roborev) | Refuse `stopped:worktree-autoreview-unconfirmed`; don't edit git config — surface it. |
 | Launch prompt unresolvable (no inline body; `@<PROMPT_PATH>` unreadable) | Refuse; report the path tried. |
 | `/rdr-implement --launch-prompt-path` returns `stopped:no-rdr-flow-home` (stale marker pre-dating the engine split) | Refuse, surfacing it; refresh the marker (`/rdr-init`). |
 | `git worktree add` fails | Remove any partial worktree; refuse. |

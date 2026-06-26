@@ -77,6 +77,31 @@ done
 command -v kata >/dev/null 2>&1 && pass "14 kata CLI available" || warn "14 kata CLI not on PATH - install kata before shipping"
 command -v roborev >/dev/null 2>&1 && pass "15 roborev CLI available" || warn "15 roborev CLI not on PATH - review/refine skills will fail"
 
+HOOKS_PATH=$(git config --path core.hooksPath 2>/dev/null || true)
+if [ -n "$HOOKS_PATH" ]; then
+  case "$HOOKS_PATH" in
+    /*) HOOKS_CANDIDATE=$HOOKS_PATH ;;
+    *) HOOKS_CANDIDATE="$PROJECT/$HOOKS_PATH" ;;
+  esac
+else
+  HOOKS_CANDIDATE="$GIT_COMMON/hooks"
+fi
+
+HOOKS_REAL=$(cd "$HOOKS_CANDIDATE" 2>/dev/null && pwd -P) || HOOKS_REAL=
+if [ -z "$HOOKS_REAL" ]; then
+  fail "16 roborev post-commit hook missing - run roborev init"
+elif [ ! -x "$HOOKS_REAL/post-commit" ]; then
+  fail "16 roborev post-commit hook missing executable - run roborev init"
+elif grep -qi "roborev" "$HOOKS_REAL/post-commit" 2>/dev/null; then
+  if [ -n "$HOOKS_PATH" ]; then
+    pass "16 roborev post-commit hook resolves - $HOOKS_REAL"
+  else
+    pass "16 roborev post-commit hook resolves via default hooks - $HOOKS_REAL"
+  fi
+else
+  fail "16 post-commit hook is not a roborev hook - run roborev init"
+fi
+
 rm -f "$ERR"
 if [ "$nf" -gt 0 ]; then
   echo "Verdict: $nf FAIL, $nw WARN - fix the FAIL(s) above, then re-run \$kata-flight-doctor in Codex or /kata-flight-doctor in Claude."
