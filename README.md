@@ -108,6 +108,14 @@ Plugin versions use SemVer in `.claude-plugin/plugin.json` and
 <patch|minor|major|X.Y.Z>`, which also creates the release commit and `vX.Y.Z`
 tag.
 
+To confirm the install path works end-to-end in a clean container (no host
+state touched), run the smoke test in [`test/install`](test/install/):
+
+```sh
+docker build -t kata-flight-installtest test/install
+docker run --rm kata-flight-installtest
+```
+
 ## Bind a Project
 
 Run `kata-flight-init` once from the consumer repository:
