@@ -1,0 +1,23 @@
+# License
+
+Copyright (c) 2025-2026 Chris K Wensel
+
+This repository uses the same split-license model as `cwensel/rdr`, separating
+workflow documentation from executable code:
+
+| What | License | File |
+| --- | --- | --- |
+| **Methodology & documentation** — the Kata Flight process and all prose: `README.md`, `ARCHITECTURE.md`, `SKILLS.md`, `RESEARCH.md`, `workspace.example`, `*.template` documentation, and the instructional prose inside each `skills/*/SKILL.md` | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | [LICENSE-DOCS](LICENSE-DOCS) |
+| **Code** — shell scripts, `*.sh.template`, plugin/marketplace JSON manifests, and any other source code | MIT | [LICENSE-CODE](LICENSE-CODE) |
+
+## Attribution
+
+The Kata Flight methodology is shared under a Creative Commons Attribution-ShareAlike
+4.0 license (CC BY-SA 4.0): you are free to use, adapt, and build on it —
+including commercially — provided you give attribution to **Chris K Wensel** and
+share your adaptations under the same license.
+
+A suggested attribution line:
+
+> Based on Kata Flight by Chris K Wensel,
+> https://github.com/cwensel/kata-flight, licensed under CC BY-SA 4.0.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "RDR Seed Triage"
+  short_description: "Triage the RDR seed backlog."
+  default_prompt: "Use $rdr-seed-triage to triage the open RDR seed backlog."

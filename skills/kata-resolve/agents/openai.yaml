@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Resolve"
+  short_description: "Resolve one or more kata issues."
+  default_prompt: "Use $kata-resolve to resolve this kata issue."

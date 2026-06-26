@@ -1,0 +1,4 @@
+interface:
+  display_name: "Roborev Triage"
+  short_description: "Route open roborev findings."
+  default_prompt: "Use $roborev-triage to triage open roborev findings for this RDR."

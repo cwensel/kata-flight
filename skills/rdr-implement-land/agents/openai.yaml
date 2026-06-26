@@ -1,0 +1,4 @@
+interface:
+  display_name: "RDR Implement Land"
+  short_description: "Land an RDR implementation."
+  default_prompt: "Use $rdr-implement-land to land this completed RDR implementation branch."

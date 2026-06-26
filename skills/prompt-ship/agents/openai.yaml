@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prompt Ship"
+  short_description: "Ship a free-form prompt safely."
+  default_prompt: "Use $prompt-ship to run this prompt through the ship pipeline."

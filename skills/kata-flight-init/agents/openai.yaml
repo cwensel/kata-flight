@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Flight Init"
+  short_description: "Bind a repo to Kata Flight."
+  default_prompt: "Use $kata-flight-init to bind this repository to Kata Flight."

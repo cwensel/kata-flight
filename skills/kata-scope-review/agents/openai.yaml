@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Scope Review"
+  short_description: "Review and route kata batches."
+  default_prompt: "Use $kata-scope-review to review this kata batch before shipping."

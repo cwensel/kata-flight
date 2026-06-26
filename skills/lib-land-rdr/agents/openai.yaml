@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lib Land RDR"
+  short_description: "Shared RDR implementation landing tail."
+  default_prompt: "Use $lib-land-rdr as the shared RDR landing reference."

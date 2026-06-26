@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Flight Doctor"
+  short_description: "Check a Kata Flight setup."
+  default_prompt: "Use $kata-flight-doctor to verify this Kata Flight setup."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Flight"
+  short_description: "Ship a batch of kata issues."
+  default_prompt: "Use $kata-flight to ship the selected kata batch."

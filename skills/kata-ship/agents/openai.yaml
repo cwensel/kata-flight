@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Ship"
+  short_description: "Resolve, review, and land katas."
+  default_prompt: "Use $kata-ship to ship this kata end to end."

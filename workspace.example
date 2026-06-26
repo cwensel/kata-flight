@@ -1,0 +1,26 @@
+# Kata Flight seam marker (template)
+#
+# Repo-local default:
+#   $PROJECT/.kata-flight/workspace
+# Workspace scope:
+#   $WS/.kata-flight-workspace
+#
+# Nearest wins. Resolve from any worktree with:
+#   GC=$(git rev-parse --git-common-dir) && GC=$(cd "$GC" && pwd -P)
+#   PROJECT=$(dirname "$GC"); WS=$(dirname "$PROJECT"); export PROJECT WS
+#   if   [ -f "$PROJECT/.kata-flight/workspace" ]; then . "$PROJECT/.kata-flight/workspace"
+#   elif [ -f "$WS/.kata-flight-workspace" ]; then . "$WS/.kata-flight-workspace"; fi
+
+: "${PROJECT:?source this file via the canonical resolver so PROJECT is set}"
+
+export KATA_FLIGHT_HOME="$WS/kata-flight"
+export KATA_FLIGHT_CONSUMER_ROOT="$PROJECT"
+export KATA_FLIGHT_EXPECTED_REPO_BASENAME="$(basename "$PROJECT")"
+export KATA_FLIGHT_CONTEXT_ROOT="$PROJECT"
+export KATA_FLIGHT_ENV="$PROJECT/.kata-flight/env.md"
+export KATA_FLIGHT_RESOURCES="$PROJECT/.kata-flight/resources.md"
+
+# Optional RDR binding. Init auto-detects $WS/rdr or $WS/process/rdr when
+# exactly one valid RDR engine exists. Use --rdr-home for non-standard paths.
+# export KATA_FLIGHT_RDR_HOME="$WS/rdr"
+# export KATA_FLIGHT_RDR_HOME_SOURCE="auto"

@@ -1,0 +1,16 @@
+{
+  "name": "kata-flight",
+  "description": "Self-hosted marketplace for the Kata Flight workflow plugin.",
+  "owner": {
+    "name": "Chris K Wensel",
+    "email": "chris@wensel.net"
+  },
+  "plugins": [
+    {
+      "name": "kata-flight",
+      "source": "./",
+      "description": "Kata Flight — kata and roborev workflow skills with optional RDR binding. Run /kata-flight-init once in a consumer project, then /kata-flight or /kata-ship to drain work.",
+      "category": "workflow"
+    }
+  ]
+}

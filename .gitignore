@@ -1,0 +1,9 @@
+.claude
+
+# macOS finder metadata
+.DS_Store
+
+# The per-project Kata Flight seam (.kata-flight/env.md,
+# .kata-flight/resources.md, repo-local marker). Created by kata-flight-init in
+# the consumer repo; never versioned in this engine repo.
+.kata-flight/

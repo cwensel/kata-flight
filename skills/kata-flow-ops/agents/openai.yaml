@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Flow Ops"
+  short_description: "Show kata flow state and inbox."
+  default_prompt: "Use $kata-flow-ops to show the kata flow dashboard."

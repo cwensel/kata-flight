@@ -1,0 +1,4 @@
+interface:
+  display_name: "Worktree Ship Pipeline"
+  short_description: "Shared worktree ship pipeline."
+  default_prompt: "Use $worktree-ship-pipeline as the shared ship pipeline reference."

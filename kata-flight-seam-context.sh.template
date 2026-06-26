@@ -1,0 +1,25 @@
+#!/bin/sh
+# SessionStart hook. Optional: pre-resolve the Kata Flight seam so skills can
+# use literal paths without repeating the resolver.
+GC=$(git rev-parse --git-common-dir 2>/dev/null) || exit 0
+GC=$(cd "$GC" 2>/dev/null && pwd -P) || exit 0
+PROJECT=$(dirname "$GC"); WS=$(dirname "$PROJECT"); export PROJECT WS
+
+if   [ -f "$PROJECT/.kata-flight/workspace" ]; then MARKER="$PROJECT/.kata-flight/workspace"
+elif [ -f "$WS/.kata-flight-workspace" ]; then MARKER="$WS/.kata-flight-workspace"
+else exit 0; fi
+
+. "$MARKER" 2>/dev/null || exit 0
+[ -n "$KATA_FLIGHT_ENV" ] && [ -f "$KATA_FLIGHT_ENV" ] || exit 0
+[ -n "$KATA_FLIGHT_RESOURCES" ] && [ -f "$KATA_FLIGHT_RESOURCES" ] || exit 0
+
+cat <<EOF
+Kata Flight seam pre-resolved:
+KATA_FLIGHT_HOME=$KATA_FLIGHT_HOME
+KATA_FLIGHT_CONSUMER_ROOT=$KATA_FLIGHT_CONSUMER_ROOT
+KATA_FLIGHT_EXPECTED_REPO_BASENAME=$KATA_FLIGHT_EXPECTED_REPO_BASENAME
+KATA_FLIGHT_CONTEXT_ROOT=$KATA_FLIGHT_CONTEXT_ROOT
+KATA_FLIGHT_ENV=$KATA_FLIGHT_ENV
+KATA_FLIGHT_RESOURCES=$KATA_FLIGHT_RESOURCES
+KATA_FLIGHT_RDR_HOME=${KATA_FLIGHT_RDR_HOME:-}
+EOF

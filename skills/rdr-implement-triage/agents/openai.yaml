@@ -1,0 +1,4 @@
+interface:
+  display_name: "RDR Implement Triage"
+  short_description: "Run RDR implementation plus triage."
+  default_prompt: "Use $rdr-implement-triage to implement this RDR and triage roborev findings."

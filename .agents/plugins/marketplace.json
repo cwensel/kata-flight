@@ -1,0 +1,20 @@
+{
+  "name": "kata-flight",
+  "interface": {
+    "displayName": "Kata Flight"
+  },
+  "plugins": [
+    {
+      "name": "kata-flight",
+      "source": {
+        "source": "local",
+        "path": "./plugins/kata-flight"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

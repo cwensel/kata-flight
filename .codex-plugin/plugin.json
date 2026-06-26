@@ -1,0 +1,41 @@
+{
+  "name": "kata-flight",
+  "version": "0.0.0",
+  "description": "Kata Flight — skill-driven kata issue shipping with roborev review handling and optional RDR process binding.",
+  "author": {
+    "name": "Chris K Wensel",
+    "email": "chris@wensel.net",
+    "url": "https://github.com/cwensel"
+  },
+  "homepage": "https://github.com/cwensel/kata-flight",
+  "repository": "https://github.com/cwensel/kata-flight",
+  "license": "CC-BY-SA-4.0 AND MIT",
+  "keywords": [
+    "kata",
+    "roborev",
+    "rdr",
+    "workflow",
+    "shipping",
+    "agent-skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Kata Flight",
+    "shortDescription": "Ship kata issues through roborev-backed agent workflows.",
+    "longDescription": "Kata Flight packages kata and roborev workflow skills for resolving, reviewing, landing, and batching tracked issues, with optional binding to an external RDR process.",
+    "developerName": "Chris K Wensel",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Edit",
+      "Shell"
+    ],
+    "defaultPrompt": [
+      "Set up Kata Flight for this project.",
+      "Ship the next kata issue.",
+      "Show the kata flight dashboard."
+    ],
+    "brandColor": "#2563EB"
+  }
+}
