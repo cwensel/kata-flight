@@ -16,6 +16,8 @@ rdr-seed peel-off).
   engine, context root, optional RDR binding, and skill links.
 - `kata-flow-ops` *(entry, read-only)* — dashboard and stuck-state queries over
   the kata lifecycle labels.
+- `kata-inbox` *(entry / orchestrator)* — drain `inbox:hold` and
+  `inbox:needs-review` through human-approved dispositions.
 
 ## Ship (kata-driven)
 

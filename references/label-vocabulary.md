@@ -23,6 +23,10 @@ An open kata with no `lifecycle:*` label is treated as filed/unreviewed.
 - `kind:rdr-seed` — design-shaped work that should enter the RDR flow.
 - `kind:rdr-tracked` — a kata tracking an RDR implementation.
 
+Ownership rule: `inbox:needs-review` and `inbox:hold` are drained by
+`kata-inbox`; `kind:rdr-seed` is drained by `rdr-seed-triage`. Do not leave an
+open kata excluded from flight without a label that names its owning drain.
+
 ## Batch And Provenance
 
 - `batch:<name>` — temporary grouping for a flight or RDR implementation run.
@@ -30,4 +34,3 @@ An open kata with no `lifecycle:*` label is treated as filed/unreviewed.
 - `severity:<low|medium|high>` — impact bucket used when creating follow-up work.
 - `area:<name>` — consumer-defined subsystem area.
 - `type:<name>` — consumer-defined work type, such as `type:bug`.
-

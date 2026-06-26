@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kata Inbox"
+  short_description: "Review and dispose held kata inbox items."
+  default_prompt: "Use $kata-inbox to review held and needs-review kata issues."

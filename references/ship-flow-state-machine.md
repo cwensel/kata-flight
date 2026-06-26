@@ -18,6 +18,10 @@ The read-only dashboard groups open katas by:
 It also reports inbox labels (`inbox:*`, `kind:rdr-seed`) and batch labels
 (`batch:*`).
 
+`inbox:*` is not a terminal limbo state. `inbox:hold` and
+`inbox:needs-review` are owned by `kata-inbox`; `kind:rdr-seed` is owned by
+`rdr-seed-triage`.
+
 ## Reaper
 
 The read-only reaper surfaces inconsistent states. It never fixes them.
@@ -35,4 +39,3 @@ The ship orchestrator is the single writer for kata lock/label transitions.
 Sub-agents may read kata state and report verdicts, but they must not mutate
 ownership or lifecycle labels unless their parent skill explicitly delegates
 that action.
-

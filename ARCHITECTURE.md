@@ -20,6 +20,7 @@ never invoked.
 | `kata-flight-init` | entry (setup) | — | Bind a consumer repo to the suite; run once. |
 | `kata-flight-doctor` | entry (read-only) | — | Verify the seam, engine, and skill links. |
 | `kata-flow-ops` | entry (read-only) | — | Dashboard + reaper over the lifecycle labels. |
+| `kata-inbox` | entry / orchestrator | consumes `inbox:*` output | Human-approved disposition of `inbox:hold` / `inbox:needs-review` katas. |
 | `kata-flight` | entry / orchestrator | — | Ship a batch: order a wave, review-gate it, ship each kata. |
 | `kata-ship` | orchestrator | invoked by `kata-flight` (also standalone) | Ship one kata end-to-end: resolve → refine → merge → close. |
 | `kata-resolve` | leaf | invoked by `kata-ship` (Phase 1c) | Fix one kata inside an isolated worktree. |
@@ -52,6 +53,7 @@ flowchart TD
     init["/kata-flight-init<br/>(bind repo)"] -.setup.-> flight
     doctor["/kata-flight-doctor<br/>(health check)"]
     ops["/kata-flow-ops<br/>(dashboard / reaper)"]
+    inboxtri["/kata-inbox<br/>(human inbox drain)"]
 
     flight["/kata-flight<br/>batch orchestrator"]
     review["/kata-scope-review<br/>review gate"]
@@ -65,6 +67,10 @@ flowchart TD
     kship -->|"refine"| roborev
 
     review -->|"design fork"| seed[/"kind:rdr-seed<br/>(kata label)"/]
+    review -->|"held / needs human"| inbox[/"inbox:*<br/>(kata label)"/]
+    inbox --> inboxtri
+    inboxtri -->|"READY"| flight
+    inboxtri -->|"TO-SEED"| seed
     seed --> seedtri["/rdr-seed-triage"]
     seedtri -->|"/rdr-seed (Stage 1)"| rdrflow{{"RDR design flow<br/>Stages 1-7 (external engine)"}}
     rdrflow --> impltri["/rdr-implement-triage<br/>(Stage 8: build)"]
@@ -84,8 +90,8 @@ flowchart TD
     classDef label fill:#FEF3C7,stroke:#D97706,color:#713F12;
     classDef ext fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A;
 
-    class init,doctor,ops,flight,review,kship,resolve,seedtri,impltri,roretri,implland,pship skill;
-    class seed label;
+    class init,doctor,ops,inboxtri,flight,review,kship,resolve,seedtri,impltri,roretri,implland,pship skill;
+    class seed,inbox label;
     class roborev,rdrflow ext;
 ```
 
@@ -128,7 +134,7 @@ Key properties:
   branch, so katas ship one at a time — no parallel merges.
 - **Review gate by default.** Every wave is scope-reviewed before it ships;
   `--no-review` skips it. The gate disposes autonomously (close dupes, route
-  forks to `kind:rdr-seed`, hold) unless `--confirm` is set.
+  forks to `kind:rdr-seed`, hold via `inbox:*`) unless `--confirm` is set.
 - **roborev refine inside each ship.** kata-ship runs `roborev refine` on the
   rebased branch; a finding is either fixed in place, spun off as a new kata
   (`KATA_PUSH:`, labeled `src:roborev`), or dropped as a false positive via
@@ -155,14 +161,44 @@ Common stops: `lost-claim-race` (another session owns the kata),
 `worktree-prep-failed`, `not-shipped` / `not-shipped-after-resume`, and the two
 user-gated tiebreakers — rebase conflict and multi-target auto-mode.
 
+## The human inbox
+
+`inbox:*` is the non-flight human decision lane. It is deliberately separate
+from `kind:rdr-seed`: a seed has already been identified as design-fork backlog
+and belongs to `rdr-seed-triage`; an inbox item needs a human-approved
+disposition before it can return to a routed owner.
+
+```mermaid
+flowchart TD
+    review["/kata-scope-review"]:::skill -->|"UMBRELLA-SPLIT / strand-risk / verdict tension"| inbox[/"inbox:hold<br/>inbox:needs-review"/]:::label
+    ship["/kata-ship stopped:needs-triage"]:::skill --> review
+    inbox --> kinbox["/kata-inbox"]:::skill
+    kinbox -->|"READY / RESCOPE-ready"| ready[/"lifecycle:reviewed"/]:::label
+    kinbox -->|"KEEP-HELD"| hold[/"inbox:hold"/]:::label
+    kinbox -->|"SPLIT"| children[/"child katas"/]:::label
+    kinbox -->|"TO-SEED"| seed[/"kind:rdr-seed"/]:::label
+    kinbox -->|"CLOSE"| closed[/"closed with evidence"/]:::label
+    ready --> flight["/kata-flight"]:::skill
+    seed --> seedtri["/rdr-seed-triage"]:::skill
+
+    classDef skill fill:#EDE9FE,stroke:#7C3AED,color:#1E1B4B;
+    classDef label fill:#FEF3C7,stroke:#D97706,color:#713F12;
+```
+
+`kata-inbox` mirrors `rdr-seed-triage` operationally: selector-driven, no bare
+whole-backlog drain, one compact grounded summary per item, then a human choice
+among legal dispositions (`READY`, `KEEP-HELD`, `RESCOPE`, `SPLIT`, `TO-SEED`,
+`CLOSE`, `REHOME`). The skill owns the tracker mutations and verifies read-back
+state after every change.
+
 ## The rdr-seed peel-off
 
 Not every kata is a bug to fix. Some encode a **design fork** — a decision with
 more than one defensible answer. The scope-review gate recognizes these and
 routes them to `kind:rdr-seed` as a terminal verdict (it then skip-filters
-seeds, treating them as already-handled). Seeds accumulate in a human inbox;
-`rdr-seed-triage` drains that inbox in an independent session and shapes each
-seed into a clean input for the RDR flow.
+seeds, treating them as already-handled). Seeds accumulate in the RDR seed
+backlog; `rdr-seed-triage` drains that backlog in an independent session and
+shapes each seed into a clean input for the RDR flow.
 
 ```mermaid
 flowchart TD

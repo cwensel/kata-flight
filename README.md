@@ -27,6 +27,7 @@ flowchart TD
     init["/kata-flight-init<br/>(bind repo)"] -.setup.-> flight
     doctor["/kata-flight-doctor<br/>(health check)"]
     ops["/kata-flow-ops<br/>(dashboard / reaper)"]
+    kinbox["/kata-inbox<br/>(human inbox drain)"]
 
     flight["/kata-flight<br/>batch orchestrator"]
     review["/kata-scope-review<br/>review gate"]
@@ -40,6 +41,10 @@ flowchart TD
     kship -->|"refine"| roborev
 
     review -->|"design fork"| seed[/"kind:rdr-seed<br/>(kata label)"/]
+    review -->|"held / needs human"| inbox[/"inbox:*<br/>(kata label)"/]
+    inbox --> kinbox
+    kinbox -->|"READY"| flight
+    kinbox -->|"TO-SEED"| seed
     seed --> seedtri["/rdr-seed-triage"]
     seedtri -->|"/rdr-seed (Stage 1)"| rdrflow{{"RDR design flow<br/>Stages 1-7 (external engine)"}}
     rdrflow --> impltri["/rdr-implement-triage<br/>(Stage 8: build)"]
@@ -59,8 +64,8 @@ flowchart TD
     classDef label fill:#FEF3C7,stroke:#D97706,color:#713F12;
     classDef ext fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A;
 
-    class init,doctor,ops,flight,review,kship,resolve,seedtri,impltri,roretri,implland,pship skill;
-    class seed label;
+    class init,doctor,ops,kinbox,flight,review,kship,resolve,seedtri,impltri,roretri,implland,pship skill;
+    class seed,inbox label;
     class roborev,rdrflow ext;
 ```
 
