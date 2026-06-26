@@ -317,6 +317,13 @@ or `path` + behavior when no symbol exists. Tool-emitted `file:line` is only a
 hint. Do not spend cycles repairing stale line numbers in comments or reports
 when the path + symbol/behavior identifies the code.
 
+Line-keyed fixtures and allowlists follow the same rule. Do not green a review,
+census, or snapshot test by changing `path:line` entries after nearby unrelated
+edits moved the code. First re-anchor by symbol/nearby text/git history and
+verify the current behavior. Change the line-keyed entry only when exact line
+location is the product contract, or when the behavior at that stable anchor
+actually changed.
+
 Exact lines matter only for line-semantics work (diagnostics, source maps,
 parser offsets, coverage, or an API that promises line accuracy). Otherwise,
 when a cited line drifts, confirm by symbol, nearby text, git history, or the

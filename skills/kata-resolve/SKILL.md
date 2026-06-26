@@ -70,6 +70,13 @@ Root cause, invariant, blocker, follow-up issue — these stay.
   move on. Do not repair line numbers in kata comments. When code is wrong on
   purpose, the nearby comment usually names the helper, sibling kata, or
   precedent that owns the fix.
+- Do not resolve a kata by re-anchoring line-only references after unrelated
+  drift. This includes test fixtures, allowlists, snapshots, and review/census
+  maps keyed as `path:line`: treat the line as a locator hint, then prove the
+  current behavior by symbol/nearby text/git history. Update a line-keyed entry
+  only when the kata is explicitly about line semantics or the underlying
+  behavior changed; otherwise leave the stale anchor alone and fix the real
+  issue.
 - For every `kata <slug>` / `RDR <id>` cited in the body: `kata show
   <slug>` + `git log --grep=<slug> --oneline` before deciding shape.
   Cited precedents transfer near-verbatim more often than not.
