@@ -110,10 +110,8 @@ still work; RDR-specific skills must stop and ask the user to rerun
 
 ## Research Resources
 
-The resources file records whether Arcaneum corpus discovery was available at
-init time, but it does not select corpora automatically. Treat corpora as
-explicit, task-specific reference routes for RDR/citation work, not as Kata
-Flight runtime dependencies. Before adding a quote or citation to a kata, RDR,
-or skill, open the source result and anchor it by title plus DOI, arXiv, URL, or
-page. Use `arc corpus list` and user/agent judgment to choose task-relevant
-project, standards, code, or paper corpora.
+If corpus discovery is available at init time, record it as optional metadata;
+never make corpus tooling a Kata Flight runtime dependency. Treat corpora as
+explicit, task-specific reference routes for RDR/citation work. Before adding a
+quote or citation to a kata, RDR, or skill, open the source result and anchor it
+by title plus DOI, arXiv, URL, page, or transcript/session identity.

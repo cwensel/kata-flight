@@ -109,18 +109,18 @@ EXPECTED_REPO_BASENAME="${KATA_FLIGHT_EXPECTED_REPO_BASENAME:-$(basename "$PRIMA
    finding's `**Severity**` / `**Location**` / `**Problem**` / `**Fix**`.
 2. **Cross-commit net.** `roborev review --since "$BASE" --wait` — **once**;
    surfaces only defects that emerge from commit interaction. Dedup
-   against the spine by `(file, line, problem-gist)`, charging duplicates
+   against the spine by `(source-anchor, problem-gist)`, charging duplicates
    to the per-commit job so the close path is unambiguous. Never re-run;
    if it touches files outside `git log $BASE..HEAD --name-only`, treat
    those as candidate-churn in step 3.
 3. **Staleness (confirm-at-HEAD).** Mark `candidate-superseded` when a
    later commit may have resolved it (`git log <ref>..HEAD --oneline --
-   <file>` non-empty, or the cited line/symbol no longer matches current
+   <file>` non-empty, or the cited symbol/behavior no longer matches current
    source). Phase 2 confirms → DROP `superseded-at-HEAD`. This absorbs
    fix-then-revert churn (guard added by commit N, removed by N+1).
 
 Result: one compact row per finding —
-`{job_id, ref, file, line, severity, problem, fix, candidate_superseded}`.
+`{job_id, ref, location_hint, stable_anchor?, severity, problem, fix, candidate_superseded}`.
 
 ## Phase 2 — Ground & classify (one sub-agent per finding, in parallel)
 
@@ -229,7 +229,7 @@ self-contained.
 - **Nested context.** If invoked under a parent that owns kata
   lock/label commands (a ship pipeline), do **not** run `kata
   create`/`kata label`; emit a `KATA_PUSH:` packet (target = short_id |
-  `new`; proposed title/body; severity + `file:line`; one-sentence
+  `new`; proposed title/body; severity + source-anchor; one-sentence
   rationale; `batch = <BATCH_LABEL>` so the parent applies the same
   key) and let the parent file it — mirroring `/roborev-refine`
   §3a-bis and kata-ship's TIEBREAKER_4. (Handoff, not a user stop.)

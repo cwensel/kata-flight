@@ -82,7 +82,7 @@ the body):
 
 - `target` = `<existing short_id>` or `new`
 - proposed `title` + §spinoff-worthiness `body` when `new`
-- roborev `<severity> <file:line>` cite
+- roborev `<severity> <source-anchor>` cite
 - one-sentence rationale for why it's out of *this* kata's scope
 
 **Auto-disposed** per §tiebreakers-shared Mechanic (4 does not ask the
@@ -391,7 +391,7 @@ Brief follows §phase-2-rebase-refine, with kata specializations:
 kata-ship additions):
 
 Standard fields plus:
-- `pushed_to_kata`: `<severity> <file:line> → <short_id>
+- `pushed_to_kata`: `<severity> <source-anchor> → <short_id>
   (existing|new)` per push (empty if none) — parent verifies the
   `roborev` label landed
 

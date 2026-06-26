@@ -60,7 +60,7 @@ against, so finding tiebreakers ask the user here rather than
 auto-dispose. (kata-flight does not invoke prompt-ship.)
 
 Agent returns a packet (≤80 words) per §tiebreakers-shared Mechanic:
-roborev `<severity> <file:line>` cite, one-sentence rationale for why
+roborev `<severity> <source-anchor>` cite, one-sentence rationale for why
 it's out of scope vs the prompt. The continuation agent (or the
 messaged agent, fast-path) applies the user's answer:
 

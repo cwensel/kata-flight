@@ -65,9 +65,11 @@ Root cause, invariant, blocker, follow-up issue — these stay.
   bullet in the commit body if it shaped the fix.
 - `git log --oneline -10` for recent commit shape.
 - Skim the file paths the issue body names ("Affected code" line) before
-  touching anything else. Read the comment block around each named line
-  (≈20 lines) — when code is wrong on purpose, that comment usually names
-  the helper, sibling kata, or precedent that owns the fix.
+  touching anything else. If a line number is present, use it only to find the
+  nearby comment block once; if it is stale, anchor by symbol/nearby text and
+  move on. Do not repair line numbers in kata comments. When code is wrong on
+  purpose, the nearby comment usually names the helper, sibling kata, or
+  precedent that owns the fix.
 - For every `kata <slug>` / `RDR <id>` cited in the body: `kata show
   <slug>` + `git log --grep=<slug> --oneline` before deciding shape.
   Cited precedents transfer near-verbatim more often than not.

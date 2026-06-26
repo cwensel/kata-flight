@@ -310,6 +310,18 @@ holds regardless of the `worktree.baseRef` setting.
 See §leaf-agent-contract — the leaf/orchestrator split *is* the context
 discipline. (Anchor kept for back-references; the contract below subsumes it.)
 
+## §source-location-discipline
+
+Use stable anchors in reports, comments, and spun-off trackers: `path::Symbol`,
+or `path` + behavior when no symbol exists. Tool-emitted `file:line` is only a
+hint. Do not spend cycles repairing stale line numbers in comments or reports
+when the path + symbol/behavior identifies the code.
+
+Exact lines matter only for line-semantics work (diagnostics, source maps,
+parser offsets, coverage, or an API that promises line accuracy). Otherwise,
+when a cited line drifts, confirm by symbol, nearby text, git history, or the
+finding gist and decide from current behavior.
+
 ## §leaf-agent-contract
 
 The pipeline has exactly two kinds of skill, partitioned by one hard
@@ -341,8 +353,10 @@ The leaf-agent rules (this is the contract consumers cite):
    summary**, never the raw output. This is the isolation win — heavy
    resolve/refine/grounding token volume stays in the leaf, off the
    orchestrator's context. Default budgets: Phase-1 ≤150–200 words, Phase-2
-   ≤200, Phase-3 ≤250 (squash sub-report ≤200 folded in). SHAs + file:line
-   fine; pasted source / diffs / test output **forbidden**. *Visibility is the
+   ≤200, Phase-3 ≤250 (squash sub-report ≤200 folded in). SHAs +
+   `source-anchor` (`path::Symbol` preferred) are fine; tool-emitted
+   `file:line` is only a hint per §source-location-discipline. Pasted
+   source / diffs / test output **forbidden**. *Visibility is the
    verdict, not the transcript* — widen a report schema if a real gap surfaces;
    never revert to raw inline output.
 4. **Independent leaves may run concurrently.** Nothing in the contract
@@ -472,7 +486,8 @@ packet:
    (`kata search` + `kata list`); a fitting home beats a duplicate.
 3. **Well-reasoned, self-contained body.** A reader who never saw
    this branch must be able to act on it. Include: **Problem** (what
-   + where, `file:line`), **Threat model / reachability** (the live
+   + where, preferably `path::Symbol`; line numbers only as hints per
+   §source-location-discipline), **Threat model / reachability** (the live
    path, or why it can't currently fire), **Grounding** (the RDR
    section / corpus / invariant evidence consulted in step 1),
    **Course of action** (the fix shape, not a full patch), and an
@@ -717,7 +732,7 @@ only if using the §Mechanic fast-path):
 - `iterations_run`, `tip_sha` (short)
 - `commits_added`: `<short-sha> <subject>` lines (no bodies) —
   Phase 3 squash needs this
-- `dismissed_findings`: `<severity> <file:line> — <reason>` (every
+- `dismissed_findings`: `<severity> <source-anchor> — <reason>` (every
   dismissal cites its grounding; tiebreaker-4 dismissals cite the
   consumer-defined disposition reason; a re-gating consumer's
   user-approved dismissals cite that approval)
