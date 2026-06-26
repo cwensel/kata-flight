@@ -76,6 +76,10 @@ shared marker at the parent workspace: `.kata-flight-workspace`. Consumers shoul
 resolve nearest-wins: repo-local first, workspace marker second. If a parent RDR
 seam exists, Kata Flight inherits its project evidence context by default and
 adds Kata-specific runtime/research routes in `.kata-flight/resources.md`.
+The roots stay separate: `KATA_FLIGHT_HOME` is this plugin,
+`KATA_FLIGHT_CONSUMER_ROOT` is the repo being changed, and
+`KATA_FLIGHT_CONTEXT_ROOT` is the repo or sibling checkout that owns
+`context/` and `rdr/evidence/`. Kata Flight itself needs no evidence directory.
 
 The generated files mirror the RDR init pattern:
 

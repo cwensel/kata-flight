@@ -135,6 +135,12 @@ The init flow writes a repo-local seam at `.kata-flight/workspace`, plus
 file directly, and `.kata-flight/.gitignore` so the per-machine seam stays out
 of git without editing the repository's root `.gitignore`.
 
+The seam separates skill code, work repo, and evidence: `KATA_FLIGHT_HOME` is
+this plugin, `KATA_FLIGHT_CONSUMER_ROOT` is the repo being changed, and
+`KATA_FLIGHT_CONTEXT_ROOT` is the repo or sibling checkout that owns project
+context (`context/`) and RDR evidence (`rdr/evidence/`). Kata Flight itself does
+not need an evidence folder.
+
 Use `--workspace` to write a shared parent marker at `.kata-flight-workspace`.
 The resolver is nearest-wins: repo-local marker first, workspace marker second.
 See [`workspace.example`](workspace.example) for the marker contract (the

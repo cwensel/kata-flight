@@ -16,7 +16,11 @@
 export KATA_FLIGHT_HOME="$WS/kata-flight"
 export KATA_FLIGHT_CONSUMER_ROOT="$PROJECT"
 export KATA_FLIGHT_EXPECTED_REPO_BASENAME="$(basename "$PROJECT")"
+
+# Project context/evidence root. May be the consumer repo or a sibling checkout
+# that owns context/ and rdr/evidence/. Kata Flight itself needs no evidence dir.
 export KATA_FLIGHT_CONTEXT_ROOT="$PROJECT"
+
 export KATA_FLIGHT_ENV="$PROJECT/.kata-flight/env.md"
 export KATA_FLIGHT_RESOURCES="$PROJECT/.kata-flight/resources.md"
 

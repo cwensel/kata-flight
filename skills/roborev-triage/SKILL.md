@@ -45,8 +45,8 @@ never stops to ask.
   It's now tracked in the configured Kata Flight context root; a worktree has no `_rdr/`,
   so read it from `$KATA_FLIGHT_CONTEXT_ROOT` (not `$PRIMARY_ROOT`). `$KATA_FLIGHT_CONTEXT_ROOT` is the
   primary checkout's sibling, derived in Phase 0 step 1 — symlink-safe
-  because it keys off the worktree's git topology. (flow's resources,
-  not the external RDR methodology repo.)
+  because it keys off the worktree's git topology. This is the project evidence
+  root, not the Kata Flight skill checkout or the external RDR methodology repo.
 
 ## Invariants
 
