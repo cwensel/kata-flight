@@ -435,7 +435,10 @@ commentary, no rollups of kata-ship reports.
 2. `git -C "$REPO_ROOT" status --porcelain` empty.
 3. Capture `TARGET_BRANCH="$(git -C "$REPO_ROOT" branch --show-current)"`;
    non-empty.
-4. `roborev status` exits 0.
+4. `roborev status` exits 0. Do not front-load daemon checks: use
+   normal kata/roborev commands. Run `kata daemon status/start` only
+   after a normal kata command fails; do not run `roborev daemon ...`
+   proactively.
 5. `--drain` without a standing selector (`--parent`/`--label`) →
    refuse (nothing to re-sweep).
 

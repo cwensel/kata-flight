@@ -373,9 +373,11 @@ above and beyond these.
 1. `git -C "$REPO_ROOT" status --porcelain` empty.
 2. Capture `TARGET_BRANCH="$(git -C "$REPO_ROOT" branch --show-current)"`;
    non-empty. Then emit the §repo-anchor divergence advisory.
-3. `roborev status` exits 0 (catches unhealthy daemon, stuck queue,
-   or uninitialized repo before any side-effects; the CLI auto-starts
-   a missing daemon, so this gate is about health, not liveness).
+3. `roborev status` exits 0 (catches unhealthy queue or
+   uninitialized repo before any side-effects). Do not front-load
+   daemon checks: use normal kata/roborev commands. Run `kata daemon
+   status/start` only after a normal kata command fails; do not run
+   `roborev daemon ...` proactively.
 
 ---
 
@@ -733,9 +735,8 @@ git worktree list --porcelain | grep -q "^branch refs/heads/<BRANCH>$"
 ```
 
 `verdict==passed` AND both checks pass → advance. Otherwise → stop
-intact for `--resume`. `daemon_unhealthy` → surface `roborev status`
-output (CLI normally auto-starts the daemon; an unhealthy verdict
-means auto-start failed or daemon wedged — user investigates).
+intact for `--resume`. `daemon_unhealthy` → surface the failing
+normal roborev command/status output; do not start roborev manually.
 
 ---
 

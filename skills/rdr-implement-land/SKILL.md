@@ -103,7 +103,7 @@ halt with its named `stopped:<reason>`.
    `<ART_DIR>` shows a recorded merge → **already landed**; report and
    stop (idempotent). Branch missing with `Status: Final` and no merge
    record → refuse `stopped:no-branch-to-land` (nothing built to land).
-5. `roborev status` exits 0 (do **not** start the daemon) — §land-ship's
+5. `roborev status` exits 0 (do **not** run `roborev daemon ...`) — §land-ship's
    pre-merge check reads `roborev fix --open --list`.
 
 ## Phases (each cites lib-land-rdr verbatim)
@@ -152,7 +152,7 @@ rdr-implement-land: <RDR_PATH>
 | `<ART_DIR>/status.md` not COMPLETE | Refuse `stopped:implementation-incomplete` (this skill lands, doesn't build). |
 | `worktree-rdr-<NNNN>` branch + worktree both gone, RDR already Implemented | Already landed; report + stop (idempotent). |
 | Branch gone, `Status: Final`, no merge record | Refuse `stopped:no-branch-to-land`. |
-| `roborev status` unhealthy | Refuse; surface. Do **not** start the daemon. |
+| `roborev status` unhealthy | Refuse; surface the normal command output. Do **not** run `roborev daemon ...`. |
 | §land-ship `stopped:*` (test/lint/conflict/ff-reject) | Halt; worktree intact; code NOT merged; re-run after fixing the branch. |
 | §land-rdr-docs `stopped:process-wrong-branch` / `readme-row-missing` | Halt with the named reason; code merged; finish the docs flip per the lib Failure ladder (re-run is forward-idempotent). |
 | Tracker not found | Non-fatal; record `tracker: none`; continue. |

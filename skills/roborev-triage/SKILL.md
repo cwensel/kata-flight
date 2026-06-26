@@ -256,7 +256,7 @@ the merge/ship flow.
 | Condition | Action |
 |---|---|
 | Not in a git repo / `git merge-base main HEAD` fails | Refuse; surface (cannot freeze a window). |
-| `roborev status` not healthy | Refuse; surface. Do **not** start the daemon. |
+| `roborev status` not healthy | Refuse; surface the normal command output. Do **not** run `roborev daemon ...`. |
 | `<art>/status.md` not COMPLETE / missing | Proceed; flag in report. |
 | No in-window jobs AND range review clean | Report "nothing to triage"; exit. |
 | Range review touches out-of-window files | Treat as candidate-churn (Phase 1.3); do **not** re-run. |
