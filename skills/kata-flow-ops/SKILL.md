@@ -130,6 +130,13 @@ kata list --status open --label kind:rdr-seed --json | jq -r --argjson days 14 '
 # Superseded (defect lost its RDR → kata-scope-review), or no tracks: line
 # (mislabeled). Draft/Final = healthy in-flight, stays quiet.
 kata list --status open --label kind:rdr-tracked --json | jq -r '.issues[].short_id'
+
+# stop-reason tally: count flights that ended `stopped:*` grouped by reason,
+# from the machine-prefixed comment (kata show --json .comments[].body — comments
+# DO return on show, unlike labels). Reads stop evidence without scraping prose.
+for id in $(kata list --json | jq -r '.issues[].short_id'); do
+  kata show "$id" --json | jq -r '.comments[]?.body | capture("^flight:stopped:(?<r>[a-z0-9-]+)").r // empty'
+done | sort | uniq -c | sort -rn
 ```
 
 Report one section per rule: the rule name, the short_ids, and the canonical

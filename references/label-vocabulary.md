@@ -34,3 +34,22 @@ open kata excluded from flight without a label that names its owning drain.
 - `severity:<low|medium|high>` — impact bucket used when creating follow-up work.
 - `area:<name>` — consumer-defined subsystem area.
 - `type:<name>` — consumer-defined work type, such as `type:bug`.
+
+## Stop reasons
+
+Canonical flight-level `stopped:<reason>` tokens — the buckets that reach the
+`flight:stopped:*` comment surface. Used to query stops without scraping prose.
+(Skills emit further internal exit-prefixes; this lists the flight outcomes.)
+
+- `wrong-repo` — ran against the wrong repo.
+- `context-root-not-found` — `$KATA_FLIGHT_CONTEXT_ROOT` unresolved.
+- `repo-anchor-drift` — repo anchor moved mid-flight.
+- `lost-claim-race` — another worker claimed the kata first.
+- `worktree-prep-failed` — worktree setup failed.
+- `worktree-isolation-failed` — worktree leaked the primary path.
+- `prepared-precondition-failed` — `--prepared` precondition unmet.
+- `not-shipped` — verification missed, not resumable.
+- `not-shipped-after-resume` — still unshipped after one resume.
+- `needs-triage` — work needs human triage before shipping.
+
+Consumers may extend this set via the override path noted at the top of this file.

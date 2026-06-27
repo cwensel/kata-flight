@@ -352,7 +352,7 @@ For each `short_id` in order:
    (read `kata show <short_id> --json` to check), post one:
    ```sh
    kata comment <short_id> --body \
-     "flight session $SESSION_ID — stopped: <reason>; <one-line context>." --json
+     "flight:stopped:<reason> session $SESSION_ID — <one-line context>." --json
    ```
    Do not touch labels/owner kata-ship left intact (e.g. for `--resume`
    recoverability). The comment is for the human triaging the failure.
