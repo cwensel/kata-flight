@@ -376,6 +376,21 @@ The leaf-agent rules (this is the contract consumers cite):
 6. **Skills run inside leaves** — `/roborev-refine`, `/roborev-respond`, and
    consumer-specific resolve skills are invoked by the leaf via `Skill`, never
    by the parent.
+7. **LONG leaves also persist a file-backed packet.** The three long phases
+   (resolve, rebase+refine, ship) MUST, before returning, `Write` their
+   structured verdict as JSON to
+   `<WORKTREE_PATH>/.run-ship/<phase>-<SHORT_ID>.json` (`phase` ∈
+   {`resolve`,`refine`,`ship`}; `.run-*` is git-invisible — the whole
+   `.claude/` tree is ignored). The packet content **is** the phase's existing
+   report schema (rule 3 / §841 / §737 / kata-ship §292) serialized — no
+   parallel schema. The return still carries the ≤80-word verdict **and** the
+   packet path. On completion the PARENT reads the packet FIRST and surfaces
+   its one-line summary from there, falling back to the conversational verdict
+   then raw output only on packet miss / malformed JSON / evidence conflict — a
+   miss is a structured stop, not a silent resume. **Short verdict leaves are
+   EXEMPT** (grounding/tiebreaker/scope-review): conversational return only.
+   The packet is the durable record read *instead of resuming*; the
+   one-line-summary-per-leaf boundary is unchanged.
 
 Decision record (author's RDR engine, not shipped):
 `flow/rdr/RDR-LEAF-PHASE-AGENTS.md`.

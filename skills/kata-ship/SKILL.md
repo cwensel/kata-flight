@@ -291,6 +291,10 @@ worktree-<SHORT_ID>` and proceed to 1c.
 - `cited_rdrs`, `followup_katas`: list or empty
 - `verdict`: `ok` | `stopped:<reason>`
 
+Writes this verdict as a packet to
+`<WORKTREE_PATH>/.run-ship/resolve-<SHORT_ID>.json` per
+§leaf-agent-contract; parent reads it first.
+
 ### 1d. Verify
 
 Per §phase-1d-verify-shared with `FILES_MAX=10`,
@@ -395,6 +399,10 @@ Standard fields plus:
   (existing|new)` per push (empty if none) — parent verifies the
   `roborev` label landed
 
+Writes this verdict as a packet to
+`<WORKTREE_PATH>/.run-ship/refine-<SHORT_ID>.json` per
+§leaf-agent-contract; parent reads it first.
+
 ### 2c. Gate + worktree re-verify
 
 Per §phase-2-rebase-refine gate. Same outcomes.
@@ -423,6 +431,10 @@ Brief follows §phase-3-ship-agent, with kata specializations:
   `MAIN_WT`, `TARGET_BRANCH`.
 - `commits_added` list from phase 2.
 - §tiebreakers-shared verbatim (tiebreaker 4 won't fire in ship).
+
+Writes its §839 verdict as a packet to
+`<WORKTREE_PATH>/.run-ship/ship-<SHORT_ID>.json` per
+§leaf-agent-contract; parent reads it first.
 
 Steps 1–6 of §phase-3-ship-agent unchanged. §squash-rules
 applies; the original-intent commit is the kata-resolve commit

@@ -1,0 +1,25 @@
+{
+  "phase": "ship",
+  "verdict": "shipped",
+  "kata_id": "nnv8",
+  "session_id": "ship-2026-06-27T14-22-05Z-a1b2",
+  "worktree_path": ".claude/worktrees/a1b2",
+  "branch": "worktree-a1b2",
+  "merged_sha": "9f3c1d2",
+  "summary": "ff-merged onto main after clean re-rebase; 2 fixups squashed; tests + lint green.",
+  "rebase_outcome_3_2": "unchanged",
+  "tests_pass": true,
+  "lint_clean": true,
+  "squash": "squashed",
+  "rollups": [
+    "9f3c1d2 fix(peer): tighten ff-merge guard"
+  ],
+  "teardown": "clean",
+  "changed_paths": [
+    "internal/merge/ffmerge.go",
+    "internal/merge/ffmerge_test.go"
+  ],
+  "evidence_paths": [],
+  "next_action": "parent: kata close nnv8 --done --commit 9f3c1d2",
+  "summary_80w": "Ship leaf for kata nnv8 completed. Re-rebase was a no-op (target unchanged), pre-merge checks and worktree-isolation gate held, two fixup commits squashed into the resolve commit with an empty post-squash diff, go test ./... and golangci-lint run ./... both passed on the rebased tip, ff-merge onto main succeeded at 9f3c1d2, and the worktree plus branch were torn down cleanly. No tiebreakers fired. Parent should close the kata against the merged SHA."
+}
