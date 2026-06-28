@@ -28,7 +28,8 @@ decision (see the per-row next-step in the ship-flow-state-machine reference).
 - **Read labels from `kata list --json .issues[].labels[]`** — they are **bare
   strings** there. Do **not** use `kata show --json .issue.labels`: it reports
   `null` even when labels exist (the ship-flow-state-machine reference §5.2). Every query
-  below feeds off `kata list … --json`.
+  below feeds off `kata list … --json`. For one-issue reads (owner/labels/links)
+  prefer engine `scripts/kata-q.sh` helpers; they encode these shapes null-safe.
 - `lifecycle:*` is **single-valued** — exactly one per kata is legal; zero or two
   is an illegal state the reaper catches.
 - `owner != null` is the real "in-flight" signal; `lifecycle:resolving|refining|shipping`

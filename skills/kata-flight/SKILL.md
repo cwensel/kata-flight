@@ -148,7 +148,10 @@ prep ops parent-owned).
    > `.issues[].labels[]`. On `kata show --json`, labels are **objects** at the
    > top-level `.labels[].label`, and **`.issue.labels` is `null`** — never read
    > it (throws *Cannot iterate over null*). Three shapes for one field; this is
-   > a kata-CLI bug (flow#7cjs), not your query.
+   > a kata-CLI bug (flow#7cjs), not your query. **Prefer the tested helpers
+   > in engine `scripts/kata-q.sh`** (`kq_ready_ids`, `kq_owned_by`, `kq_links`,
+   > `kq_blockers`, …) over hand-written `jq`; never `jq '.[]'` over `kata
+   > list --json`. `owner` is absent on unowned list items — read it null-safe.
 2. **Filter ineligible** (silent, log count). Prefer the `kata ready`
    primitive — it *is* the eligibility definition (open + no open blocker),
    composed with label filters (see the consumer label vocabulary reference):

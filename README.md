@@ -121,6 +121,13 @@ docker build -t kata-flight-installtest test/install
 docker run --rm kata-flight-installtest
 ```
 
+The canonical kata JSON helpers in [`scripts/kata-q.sh`](scripts/kata-q.sh) have
+an offline test (captured fixtures, no kata daemon needed):
+
+```sh
+bash test/kata-json/run.sh
+```
+
 ## Bind a Project
 
 Run `kata-flight-init` once from the consumer repository:

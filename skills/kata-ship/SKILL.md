@@ -193,8 +193,12 @@ kata comment   <id> --body "ship session $SESSION_ID — phase 1 resolve startin
 **`--prepared`:** skip the three commands above. The caller did
 them. Adopt `$SESSION_ID` from the existing owner:
 ```sh
-SESSION_ID=$(kata show <id> --json | jq -re '.issue.owner | select(startswith("kata-ship/"))') \
+# Source the null-safe owner helpers (engine scripts/, resolved as in doctor):
+for H in "$KATA_FLIGHT_HOME" "$CLAUDE_PLUGIN_ROOT" "$CODEX_PLUGIN_ROOT"; do
+  [ -f "$H/scripts/kata-q.sh" ] && { . "$H/scripts/kata-q.sh"; break; }; done
+kq_owned_by <id> "kata-ship/" \
   || { echo "stopped:prepared:owner-not-kata-ship" >&2; exit 1; }
+SESSION_ID=$(kq_owner <id>)   # null-safe; never errors on an unowned issue
 kata show <id> --json | jq -e '[(.labels // [])[].label] | index("lifecycle:resolving")' \
   >/dev/null || { echo "stopped:prepared:missing-phase-label" >&2; exit 1; }
 ```
