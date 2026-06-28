@@ -47,9 +47,26 @@ Canonical flight-level `stopped:<reason>` tokens — the buckets that reach the
 - `lost-claim-race` — another worker claimed the kata first.
 - `worktree-prep-failed` — worktree setup failed.
 - `worktree-isolation-failed` — worktree leaked the primary path.
+- `worktree-live` — a linked worktree already exists on the kata's branch (a
+  live/concurrent ship); surfaced by §preflight-classifier, never reclaimed.
+- `primary-dirty` — primary checkout had uncommitted changes before claiming.
+- `primary-off-branch` — primary checkout was not on `TARGET_BRANCH`.
 - `prepared-precondition-failed` — `--prepared` precondition unmet.
 - `not-shipped` — verification missed, not resumable.
 - `not-shipped-after-resume` — still unshipped after one resume.
 - `needs-triage` — work needs human triage before shipping.
+
+## Reclaimable reasons
+
+`reclaimable:<reason>` codes are emitted by §preflight-classifier for worktree
+debris that is recoverable by an offered action (distinct from `stopped:*`,
+which refuses/halts). They do not reach the `flight:stopped:*` surface; they
+drive an `AskUserQuestion`/cleanup, then the flight proceeds.
+
+- `dead-lock` — branch + path both present with no linked worktree (crashed
+  session); the §Stale-lock reclaim (rja8) case caught at git level.
+- `branch-only` — branch exists, path absent: a `--resume` re-attach candidate,
+  or a stale branch to clean up.
+- `path-only` — stale worktree directory with no matching branch.
 
 Consumers may extend this set via the override path noted at the top of this file.

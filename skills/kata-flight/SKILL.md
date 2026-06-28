@@ -270,8 +270,9 @@ For each `short_id` in order:
    worktree-ship-pipeline §phase-1b-worktree-creation — **raw Bash `git
    worktree add` only, no `EnterWorktree`/`ExitWorktree`** (see that
    section's §worktree-creation-rationale):
-   - **§repo-anchor re-assert** (`stopped:repo-anchor-drift` on
-     failure).
+   - **§preflight-classifier** first (subsumes the §repo-anchor re-assert);
+     proceed to create only on the `clean` outcome — a `stopped:*`/
+     `reclaimable:*` outcome is dispositioned there, not by attempting create.
    - Bash `git -C "$REPO_ROOT" worktree add -b worktree-<short_id>
      "$REPO_ROOT/.claude/worktrees/<short_id>" "$TARGET_BRANCH"`
    - Verify per §phase-1b-worktree-creation step 2 (branch exists,

@@ -569,6 +569,59 @@ its grounding (auto-disposed via §Mechanic, or surfaced for 3/5).
 
 ---
 
+## §preflight-classifier
+
+Cheap, **read-only** debris check run as step 0 of §phase-1b-worktree-creation
+(and before any `--resume` adoption). It emits exactly one outcome code so the
+parent never attempts a `git worktree add` that is already known to collide.
+`WORKTREE_PATH`/`BRANCH`/`TARGET_BRANCH` are as defined below. First match wins.
+Assumes `REPO_ROOT` was captured from `git rev-parse --show-toplevel` (§repo-anchor)
+and that `.claude/` is ignored (§leaf-agent-contract) — so a live worktree under
+`.claude/worktrees/` does not register as `primary-dirty`.
+
+```sh
+# Primary checkout must be sane before we claim anything.
+[ "$(git -C "$REPO_ROOT" rev-parse --show-toplevel)" = "$REPO_ROOT" ] \
+  || { echo "stopped:repo-anchor-drift" >&2; return 1; }
+[ -z "$(git -C "$REPO_ROOT" status --porcelain)" ] \
+  || { echo "stopped:primary-dirty" >&2; return 1; }
+[ "$(git -C "$REPO_ROOT" branch --show-current)" = "$TARGET_BRANCH" ] \
+  || { echo "stopped:primary-off-branch" >&2; return 1; }
+
+BR=$(git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH" && echo y || echo n)
+WT=$(git -C "$REPO_ROOT" worktree list --porcelain | grep -qx "branch refs/heads/$BRANCH" && echo y || echo n)
+PX=$([ -e "$WORKTREE_PATH" ] && echo y || echo n)
+
+# A linked worktree on our branch = a live (possibly concurrent) ship. Never strip it.
+[ "$WT" = y ] && { echo "stopped:worktree-live:$BRANCH" >&2; return 1; }
+# Branch + path, no linked worktree = dead-lock debris from a crashed session.
+[ "$BR" = y ] && [ "$PX" = y ] && { echo "reclaimable:dead-lock:$BRANCH" >&2; return 2; }
+# Branch only (no path) = a --resume re-attach candidate, or a stale branch.
+[ "$BR" = y ] && [ "$PX" = n ] && { echo "reclaimable:branch-only:$BRANCH" >&2; return 2; }
+# Path only (no branch) = stale directory debris.
+[ "$BR" = n ] && [ "$PX" = y ] && { echo "reclaimable:path-only:$WORKTREE_PATH" >&2; return 2; }
+echo "clean" >&2; return 0
+```
+
+**Outcome → action.** `clean` is the *only* outcome that proceeds to step 1's
+`git worktree add`; every other outcome early-returns and is dispositioned here,
+so the doomed `git worktree add` is never run.
+
+| Outcome | Action |
+|---|---|
+| `clean` | Proceed to §phase-1b step 1. |
+| `stopped:worktree-live:<b>` | Halt; surface the owner (`kq_owner`). Never strip a live lock. Not `--resume`. |
+| `reclaimable:dead-lock:<b>` | The §Stale-lock reclaim (rja8) case, caught at git level: `AskUserQuestion` *reclaim / skip / abort*. On reclaim follow rja8 (prune+remove path, `git branch -D <b>`, clear phase label, `kata unassign`), then create. |
+| `reclaimable:branch-only:<b>` | On a known `--resume`: re-attach `git -C "$REPO_ROOT" worktree add "$WORKTREE_PATH" <b>` (§resume-mechanics). Else offer cleanup (`git branch -D <b>`) or human choice. |
+| `reclaimable:path-only:<p>` | Offer cleanup: `git -C "$REPO_ROOT" worktree prune` then `rm -rf "<p>"`, then create. |
+| `stopped:primary-dirty` / `primary-off-branch` / `repo-anchor-drift` | Refuse before claiming; surface the breach. Not `--resume`. |
+
+The `clean`-only contract means the states that reach step 1 (no branch, no path,
+no linked worktree, primary clean and on `TARGET_BRANCH`) cannot collide; step 1's
+loud-fail backstop stays only for a TOCTOU race between classify and create.
+
+---
+
 ## §phase-1b-worktree-creation
 
 Parent owns worktree creation via **raw Bash `git worktree add` only**.
@@ -581,11 +634,11 @@ sub-agent orchestrator.
 `WORKTREE_PATH` = `<REPO_ROOT>/.claude/worktrees/<SHORT_ID>`,
 `BRANCH` = `worktree-<SHORT_ID>`.
 
-0. **§repo-anchor re-assert.** Drift check
-   (`git rev-parse --show-toplevel == REPO_ROOT`) before step 1;
-   `stopped:repo-anchor-drift` on failure. (All `git` below uses
-   explicit `-C "$REPO_ROOT"`, but the anchor must be right so the
-   worktree lands in the correct repo.)
+0. **§preflight-classifier.** Run the read-only debris classifier (it
+   subsumes the §repo-anchor drift check). Step 1 runs **only** on the
+   `clean` outcome; any `stopped:*`/`reclaimable:*` outcome is
+   dispositioned per the classifier's table — never fall through to
+   `git worktree add`. (All `git` below uses explicit `-C "$REPO_ROOT"`.)
 1. **Create via Bash** (does not mutate tool-call CWD; works from any
    launch context):
    ```sh
