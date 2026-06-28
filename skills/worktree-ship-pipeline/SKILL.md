@@ -390,7 +390,13 @@ The leaf-agent rules (this is the contract consumers cite):
    miss is a structured stop, not a silent resume. **Short verdict leaves are
    EXEMPT** (grounding/tiebreaker/scope-review): conversational return only.
    The packet is the durable record read *instead of resuming*; the
-   one-line-summary-per-leaf boundary is unchanged.
+   one-line-summary-per-leaf boundary is unchanged. A leaf that needs a
+   parent-owned tracker write (§external-op-classification) carries it as a
+   typed `mutation_requests` array on the same packet (each entry
+   `{op,id,args}`, `op` ∈ `kata-comment|kata-label-add|kata-label-rm|kata-close|kata-owner-set|kata-owner-unset`);
+   `next_action` stays as the human-readable mirror. kata **create** routes
+   through `KATA_PUSH:`, not this array. The parent executes them in order as
+   the single writer (§Mutation Rule).
 
 Decision record (author's RDR engine, not shipped):
 `flow/rdr/RDR-LEAF-PHASE-AGENTS.md`.
@@ -414,6 +420,35 @@ above and beyond these.
    daemon checks: use normal kata/roborev commands. Run `kata daemon
    status/start` only after a normal kata command fails; do not run
    `roborev daemon ...` proactively.
+
+---
+
+## §external-op-classification
+
+Operations outside pure workspace reads predictably fail on the first blind
+attempt (sandbox blocks, daemon down, parent-owned writes). Classify before
+acting; spend at most one retry. Harness-neutral — describes *what kind* of op
+it is, not any one harness's sandbox syntax.
+
+| Operation class | Leaf action | On repeated denial |
+|---|---|---|
+| kata read (`list`/`show`/`ready`/`labels`/`health`) | do-inline; gate with `kata health` first (cheap, read-only) | `stopped:daemon-unreachable` |
+| roborev status read (`roborev status`) | do-inline (the §preflight-shared #3 gate) | refuse (`stopped:not-shipped`-class) |
+| kata tracker **write** — comment / label / close / owner | **emit-packet** — never mutate inline (§Mutation Rule); parent is the single writer | `stopped:permission-boundary` |
+| kata **create** (classifier-restricted) | **emit-packet** via `KATA_PUSH:` (§tiebreakers-shared / kata-ship `TIEBREAKER_4`) | `stopped:permission-boundary` |
+| roborev mutation inside leaf (`/roborev-respond`/`-refine`, writes `~/.roborev/`) | request the right execution mode up front, then do-inline | `stopped:permission-boundary` |
+| kata/roborev daemon **management** (`daemon start`) | reactive only — run **after** a normal command fails, never proactively (keeps §preflight-shared #3 intact) | `stopped:daemon-unreachable` |
+
+**Bounded-retry contract.** Classify, then at most **one** retry after requesting
+the correct execution mode. A second denial is terminal: emit
+`stopped:permission-boundary` and stop — never loop. **Parent-owned ops are never
+retried inside the leaf**: the leaf emits a packet (§leaf-agent-contract rule 7
+`mutation_requests`) and returns; the retry budget belongs to the parent that
+performs the write.
+
+The proactive `kata health` gate and the reactive daemon-management rule do not
+conflict: `health` is a cheap read (allowed up front); `daemon start` is a
+side-effecting bind (reactive only, per §preflight-shared #3).
 
 ---
 

@@ -21,5 +21,8 @@
   ],
   "evidence_paths": [],
   "next_action": "parent: kata close nnv8 --done --commit 9f3c1d2",
+  "mutation_requests": [
+    { "op": "kata-close", "id": "nnv8", "args": { "done": true, "commit": "9f3c1d2" } }
+  ],
   "summary_80w": "Ship leaf for kata nnv8 completed. Re-rebase was a no-op (target unchanged), pre-merge checks and worktree-isolation gate held, two fixup commits squashed into the resolve commit with an empty post-squash diff, go test ./... and golangci-lint run ./... both passed on the rebased tip, ff-merge onto main succeeded at 9f3c1d2, and the worktree plus branch were torn down cleanly. No tiebreakers fired. Parent should close the kata against the merged SHA."
 }

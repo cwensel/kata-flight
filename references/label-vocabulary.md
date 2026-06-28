@@ -55,6 +55,9 @@ Canonical flight-level `stopped:<reason>` tokens — the buckets that reach the
 - `not-shipped` — verification missed, not resumable.
 - `not-shipped-after-resume` — still unshipped after one resume.
 - `needs-triage` — work needs human triage before shipping.
+- `permission-boundary` — an external/parent-owned write was denied past the
+  one-retry bound (§external-op-classification).
+- `daemon-unreachable` — kata/roborev daemon could not be reached or bound.
 
 ## Reclaimable reasons
 
