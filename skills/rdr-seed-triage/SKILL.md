@@ -102,19 +102,25 @@ same proportionality test the RDR template's Normative Contracts section carries
 ## Phase 0 — Locate & resolve
 
 **Run this resolver verbatim** (same worktree-safe derivation as `kata-scope-review`
-Phase 0 step 1 — inlined, not paraphrased, because it is load-bearing). The
-`.kata-flight-workspace` marker is at the **workspace root** (`workspace root`) — **two**
-`dirname`s up, not the repo root; sourcing it exports the RDR-corpus paths:
+Phase 0 step 1 — inlined, not paraphrased, because it is load-bearing). This skill
+straddles **two seams**: the kata-flight seam (`.kata-flight/env`, the kata corpus)
+and the **RDR seam** (`.rdr-workspace` / `.rdr/workspace`, which is the **sole**
+definer of `$RDR_ENV`). A SessionStart hook may pre-resolve either, but hook text
+reaches context, **not** this subshell — so source both markers here unconditionally;
+do not skip on the strength of pre-resolved literals:
 
 ```sh
 PRIMARY_ROOT=$(dirname "$(cd "$(git rev-parse --git-common-dir)" && pwd -P)")
 [ -f "$PRIMARY_ROOT/.kata-flight/env" ] && . "$PRIMARY_ROOT/.kata-flight/env"
 EXPECTED_REPO_BASENAME="${KATA_FLIGHT_EXPECTED_REPO_BASENAME:-$(basename "$PRIMARY_ROOT")}"
 [ "$(basename "$PRIMARY_ROOT")" = "$EXPECTED_REPO_BASENAME" ] || { echo "stopped:wrong-repo:$PRIMARY_ROOT" >&2; exit 1; }
-WS=$(dirname "$PRIMARY_ROOT")   # workspace root (workspace root) — worktree-invariant
+WS=$(dirname "$PRIMARY_ROOT")   # workspace root — worktree-invariant
 KATA_FLIGHT_CONTEXT_ROOT="${KATA_FLIGHT_CONTEXT_ROOT:-$PRIMARY_ROOT}"
 [ -d "$KATA_FLIGHT_CONTEXT_ROOT" ] || { echo "stopped:context-root-not-found:$KATA_FLIGHT_CONTEXT_ROOT" >&2; exit 1; }
-[ -f "$RDR_ENV" ] || { echo "stopped:no-rdr-env:$RDR_ENV (marker not sourced?)" >&2; exit 1; }
+# RDR seam (defines $RDR_ENV): nearest marker wins — repo-local, else workspace root.
+if   [ -f "$PRIMARY_ROOT/.rdr/workspace" ]; then . "$PRIMARY_ROOT/.rdr/workspace"
+elif [ -f "$WS/.rdr-workspace" ];           then . "$WS/.rdr-workspace"; fi
+[ -f "$RDR_ENV" ] || { echo "stopped:no-rdr-env:${RDR_ENV:-unset} (.rdr-workspace not found/sourced)" >&2; exit 1; }
 ```
 
 Then:

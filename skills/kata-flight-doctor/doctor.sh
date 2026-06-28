@@ -58,6 +58,19 @@ fi
 
 if [ -n "${KATA_FLIGHT_RDR_HOME:-}" ]; then
   [ -d "$KATA_FLIGHT_RDR_HOME/stages" ] && [ -d "$KATA_FLIGHT_RDR_HOME/skills" ] && [ -d "$KATA_FLIGHT_RDR_HOME/prompts" ] && [ -f "$KATA_FLIGHT_RDR_HOME/TEMPLATE.md" ] && pass "11 optional RDR binding resolves - $KATA_FLIGHT_RDR_HOME" || fail "11 KATA_FLIGHT_RDR_HOME is not an RDR engine ($KATA_FLIGHT_RDR_HOME) - re-run /kata-flight-init --rdr-home PATH"
+  # RDR-backed skills (rdr-seed-triage, rdr-implement-triage) source the RDR seam
+  # for $RDR_ENV - a different marker than the kata-flight seam above. Verify it
+  # resolves here so those skills don't die at Phase 0.
+  if   [ -f "$PROJECT/.rdr/workspace" ]; then RDR_MARKER="$PROJECT/.rdr/workspace"
+  elif [ -f "$WS/.rdr-workspace" ];      then RDR_MARKER="$WS/.rdr-workspace"
+  else RDR_MARKER=; fi
+  if [ -z "$RDR_MARKER" ]; then
+    fail "11b no RDR seam marker (.rdr/workspace or .rdr-workspace) - RDR-backed skills will stop:no-rdr-env; run \$rdr-init"
+  elif ( . "$RDR_MARKER" 2>/dev/null; [ -f "${RDR_ENV:-}" ] ); then
+    pass "11b RDR seam resolves - $RDR_MARKER"
+  else
+    fail "11b RDR seam marker present but \$RDR_ENV unresolved ($RDR_MARKER) - re-run \$rdr-init"
+  fi
 else
   warn "11 no optional RDR binding - RDR-backed skills will stop until /kata-flight-init --rdr-home PATH"
 fi
