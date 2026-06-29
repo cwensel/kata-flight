@@ -12,12 +12,12 @@ cited-by-anchor model: **not invoked directly.** Consumer skills
 sections below. Renaming any anchor breaks a consumer — treat the
 anchor list as a public API.
 
-This file owns the path **from a green, unmerged `worktree-rdr-<NNNN>`
-branch to `Implemented`**: ship the branch to main, flip the RDR +
-indexes, close the tracking kata, and (optionally) flight the residual
-bug children. It deliberately does **not** own the *build* (that is
-launch.md / `rdr-implement-triage` Phase 1) — it starts where the
-implementation is COMPLETE and committed.
+This file owns the path **from a green, unmerged RDR implementation
+branch to `Implemented`**: ship the branch to main, flip the RDR(s) +
+indexes, close tracking kata, and (optionally) flight residual bug
+children. It deliberately does **not** own the *build* (that is launch.md
+/ `rdr-implement-triage` Phase 1) — it starts where the implementation is
+COMPLETE and committed.
 
 ## Where this runs
 
@@ -35,14 +35,14 @@ paths + ≤200-word summaries.
 | Name | Meaning |
 |---|---|
 | `REPO_ROOT` | consumer primary checkout (absolute); `§repo-anchor` already asserted it matches the configured consumer repo |
-| `WORKTREE_PATH` | `.claude/worktrees/rdr-<NNNN>` (absolute) — the built branch's worktree |
-| `BRANCH` | `worktree-rdr-<NNNN>` |
+| `WORKTREE_PATH` | `.claude/worktrees/<SHORT_ID>` (absolute) — the built branch's worktree |
+| `BRANCH` | `worktree-<SHORT_ID>` |
 | `TARGET_BRANCH` | consumer primary checkout branch (the ff-merge target; normally `main`) |
-| `RDR_PATH` | the RDR, e.g. `cli/0037-materialize-policy.md` (resolves under `$PROCESS_ROOT/rdr/`, where `$PROCESS_ROOT` is the configured RDR docs root) |
-| `NNNN` | the 4-digit RDR number (from `RDR_PATH`) |
-| `SLUG` | RDR basename without `.md` |
-| `ART_DIR` | the launch artifacts dir beside the RDR (`$PROCESS_ROOT/rdr/cli/<SLUG>/`) |
-| `BATCH_LABEL` | `batch:rdr-<NNNN>` — the RDR-scoped key triage stamped on every bug child |
+| `RDR_PATHS` | one or more RDRs, e.g. `cli/0037-materialize-policy.md`; singular callers pass a one-item list |
+| `NNNN_LIST` | 4-digit RDR numbers from `RDR_PATHS` |
+| `SLUGS` | RDR basenames without `.md` |
+| `ART_DIRS` | launch artifact dirs beside each RDR (`$PROCESS_ROOT/rdr/cli/<SLUG>/`) |
+| `BATCH_LABEL` | run-scoped key triage stamped on every bug child (`batch:rdr-<NNNN>` for one RDR) |
 | `PROCESS_ROOT` | configured RDR docs root holding the RDRs and indexes; resolved from the Kata Flight seam or RDR binding |
 | `KATA_FLIGHT_CONTEXT_ROOT` | the configured Kata Flight context root |
 
@@ -96,8 +96,8 @@ The worktree is left intact for re-run.
 ## §land-rdr-docs
 
 One bounded sub-agent makes **a single `docs(rdr):` commit on
-`the configured RDR docs branch`** in the RDR docs repo that flips the RDR to `Implemented`
-and reconciles the two status indexes in lockstep — the atomicity is
+`the configured RDR docs branch`** in the RDR docs repo that flips all
+`RDR_PATHS` to `Implemented` and reconciles the status indexes in lockstep — the atomicity is
 the point: it is what prevents the index-drift class (a README that
 says `Final` while the file says `Implemented`, which has produced
 reconcile-only sessions historically).
@@ -107,7 +107,8 @@ precondition is a prior Read of the exact file; a `grep`/`sed` peek does
 **not** satisfy it. Read each file fully before editing it.
 
 Spawn `Agent(subagent_type: "general-purpose")`. Brief carries
-`PROCESS_ROOT`, `NNNN`, `SLUG`, `RDR_PATH`, `ART_DIR`, `merged_sha`.
+`PROCESS_ROOT`, `RDR_PATHS`, `NNNN_LIST`, `SLUGS`, `ART_DIRS`,
+`merged_sha`.
 The agent:
 
 1. **Branch guard.** `git -C "$PROCESS_ROOT" branch --show-current` must
@@ -116,24 +117,24 @@ The agent:
    branch is `the configured RDR docs branch` by established 0041/0042 precedent). The parent
    surfaces it; the code is already merged, so this is a recoverable
    docs-only halt (re-run after `git -C <RDR_DOCS_REPO> switch <RDR_DOCS_BRANCH>`).
-2. **Flip the RDR Status line.** In
+2. **Flip RDR Status lines.** For each
    `$PROCESS_ROOT/rdr/cli/<SLUG>.md`, Read it, then replace the
    `- **Status**:` line so it reads exactly `- **Status**: Implemented`
    — the bare word. The long "Final — locked…" prose is **replaced**,
    not retained (the no-change-history rule). If the line already reads
    `Implemented`, leave it (idempotent re-run).
-3. **Flip the README index row.** In
-   `$PROCESS_ROOT/rdr/cli/README.md`, Read it, find the `| [<NNNN>]…` row
+3. **Flip README index rows.** In
+   `$PROCESS_ROOT/rdr/cli/README.md`, Read it, find each `| [<NNNN>]…` row
    in the `## Index` table, and change its Status cell from `Final` to
    `Implemented` (preserve the column padding/alignment of neighbouring
    rows). If the RDR's row is absent → return
    `stopped:readme-row-missing:<NNNN>` (the index is the source of truth
    for the status sweep; a missing row is a real defect, not a
    skip). Already `Implemented` → leave it.
-4. **Conditional matrix cell.** In
+4. **Conditional matrix cells.** In
    `$PROCESS_ROOT/rdr/cli/SMO-FEATURE-MATRIX.md`, **grep first** for an
-   `R-<NNNN>` / `cli/<NNNN>` reference. If a matching SMO×verb cell
-   exists, Read the file and update that cell's status marker
+   `R-<NNNN>` / `cli/<NNNN>` reference for each RDR. If matching SMO×verb
+   cells exist, Read the file and update those cells' status markers
    (`●` pending → `✓` shipped) and RDR pointer per the file's legend.
    If **no** matching reference → make **no** edit (most RDRs have no
    matrix cell; that is normal, not a miss). Record `matrix: edited |
@@ -141,12 +142,12 @@ The agent:
 5. **Never touch `rdr-resources.md`** — it is the evidence index, not the
    status index. Out of scope for landing.
 6. **Stage the launch artifacts.** `git -C "$PROCESS_ROOT" add` the
-   three edited files **and** the artifacts dir `<ART_DIR>/` (`req-list.md`,
+   edited files **and** each artifacts dir in `ART_DIRS` (`req-list.md`,
    `coverage.md`, `verification.md`, `deviations.md`, `status.md`,
    `triage.md` — whichever exist).
 7. **One commit.** `git -C "$PROCESS_ROOT" commit` with message:
    ```
-   docs(rdr): <NNNN> implemented (consumer-repo <merged_sha>)
+   docs(rdr): <SHORT_ID> implemented (consumer-repo <merged_sha>)
 
    Status Final→Implemented; README index + matrix reconciled.
    ```
@@ -155,7 +156,7 @@ The agent:
    *merged* sha, not a pre-rebase one).
 
 **Report (≤120 words):** `verdict` (`done` | `stopped:<reason>`),
-`status_flipped` (bool), `readme_flipped` (bool), `matrix`
+`status_flipped` (count), `readme_flipped` (count), `matrix`
 (`edited`/`none`), `docs_sha` (short), one-line summary.
 
 On `stopped:*` the parent surfaces it and continues to §land-kata-close
@@ -169,7 +170,7 @@ finished by hand or re-run).
 ## §land-kata-close
 
 A **bounded parent step** (no sub-agent — it is two `kata` calls and a
-read). Closes the RDR's tracking kata; leaves the bug children open.
+read). Closes the RDR tracking kata(s); leaves the bug children open.
 
 `kata` binds its project by **cwd**, so run every `kata` call with the
 parent's cwd at `REPO_ROOT` (the consumer checkout — katas
@@ -177,11 +178,11 @@ resolve against that project). The binary is expected on `PATH`; if it is not,
 install it from <https://katatracker.com/> or use the explicit path configured
 by the consumer.
 
-1. **Find the tracker.**
+1. **Find tracker(s).**
    ```sh
    kata list --label kind:rdr-tracked --status open --json
    ```
-   The result is `{"issues":[…]}`. Among `.issues`, select the one whose
+   The result is `{"issues":[…]}`. For each RDR, select any issue whose
    `body`/comments carry `tracks: cli/<NNNN>` (the RDR back-reference) and
    take its **`short_id`** (e.g. `bgqd`) — **not** the numeric `id` field.
    `kata close` rejects the legacy numeric id (`"…looks like a legacy issue
@@ -190,7 +191,7 @@ by the consumer.
    often closes it at COMPLETE); add a resolution comment to the closed
    tracker if one is findable via `kata search "tracks:
    cli/<NNNN>"` (again by `short_id`), else record `tracker: none` and move
-   on. More than one open match → close each.
+   on. More than one open match for an RDR → close each.
 2. **Close with typed evidence** (the close gate requires `--reason
    done` + a typed `--evidence` + a `--message` ≥40 chars; the sugar
    flags satisfy it):
@@ -204,11 +205,11 @@ by the consumer.
    the recurring failure mode is a `--message` under 40 chars or an
    untyped `--evidence`.
 3. **Leave the bug children open.** Do **not** touch any
-   `<BATCH_LABEL>` (`batch:rdr-<NNNN>`) kata — those are §land-flight's
+   `<BATCH_LABEL>` kata — those are §land-flight's
    input.
 
-**Report (≤60 words):** `tracker: closed <short_id> | already-closed |
-none`, plus the count of open `<BATCH_LABEL>` children — `kata list
+**Report (≤60 words):** `tracker: <NNNN>=closed <short_id> |
+already-closed | none`, plus the count of open `<BATCH_LABEL>` children — `kata list
 --label <BATCH_LABEL> --status open --json` returns `{"issues":[…]}`, so
 count `.issues` (e.g. pipe to `python3 -c 'import sys,json;
 print(len(json.load(sys.stdin)["issues"]))'`). That count is what
@@ -218,8 +219,8 @@ print(len(json.load(sys.stdin)["issues"]))'`). That count is what
 
 ## §land-flight
 
-Sweeps the residual bug children triage filed (`<BATCH_LABEL>` =
-`batch:rdr-<NNNN>`). **Runs at the top level** — `/kata-flight` spawns
+Sweeps the residual bug children triage filed under `<BATCH_LABEL>`.
+**Runs at the top level** — `/kata-flight` spawns
 its own per-kata ship agents, and a sub-agent cannot fan out (the
 nested-agent wall). To keep its verbose per-kata chatter out of the
 orchestrator context, **redirect its output to a file and read back
@@ -232,11 +233,11 @@ only a digest.**
 2. **Otherwise invoke at top level**, capturing output to disk so it
    never enters orchestrator context:
    ```
-   /kata-flight --label batch:rdr-<NNNN> --drain
+   /kata-flight --label <BATCH_LABEL> --drain
    ```
    Run it via the Skill tool. kata-flight already runs its
    scope-review-per-wave gate and disposes autonomously. When it
-   finishes, write its full report block to `<ART_DIR>/flight.md`, then
+   finishes, write its full report block to the primary `<ART_DIR>/flight.md`, then
    read back **only** the final summary line + per-kata verdict counts
    (≤200 words) into the orchestrator. Never echo the raw per-kata
    stream.
@@ -247,7 +248,7 @@ only a digest.**
    `the configured RDR docs branch` in `process` (the same docs branch §land-rdr-docs used):
    ```
    git -C "$PROCESS_ROOT" add <ART_DIR>/flight.md
-   git -C "$PROCESS_ROOT" commit -m "docs(rdr): <NNNN> flight drain report (<BATCH_LABEL>, <n> shipped)"
+   git -C "$PROCESS_ROOT" commit -m "docs(rdr): <SHORT_ID> flight drain report (<BATCH_LABEL>, <n> shipped)"
    ```
    Skip the commit only in the `nothing-to-drain` case (no file is
    written). Forward-idempotent: a re-run with no new flight changes is a
@@ -263,10 +264,10 @@ and any held-kata short_ids the user should look at.
 ## Composite final report (the consumer assembles this)
 
 ```
-land: <RDR_PATH>
+land: <RDR_PATH...>
   ship:    shipped <merged_sha> | stopped:<reason>
   rdr:     Status→Implemented · README✓ · matrix:<edited|none>   (docs <docs_sha> on the configured RDR docs branch)
-  kata:    tracker <closed <short_id>|already-closed|none>
+  kata:    tracker(s) <closed <short_id>|already-closed|none>
   flight:  nothing-to-drain | drained <n>/<m> (<k> held)   (<ART_DIR>/flight.md)
 ```
 

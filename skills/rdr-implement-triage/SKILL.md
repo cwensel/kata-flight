@@ -1,24 +1,33 @@
 ---
 name: rdr-implement-triage
-argument-hint: <RDR_PATH> [@<prompt-path>] [--ship | --close-and-flight] | --resume <RDR_PATH>
-description: 'Use to run unattended RDR Stage 8 implementation plus roborev triage in one worktree session. Optional flags also ship, close the RDR, and flight follow-up katas. Trigger for implement RDR with triage.'
+argument-hint: <RDR_PATH...> [@<prompt-path>] [--ship | --close-and-flight] | --resume <RDR_PATH...>
+description: 'Use to run unattended RDR Stage 8 implementation for one or more coupled RDRs plus roborev triage in one worktree session. Optional flags also ship, close the RDR tracker(s), and flight follow-up katas. Trigger for implement RDR with triage.'
 ---
 
 # rdr-implement-triage
 
 The unattended, triage-chaining **wrapper around `/rdr-implement`** (RDR
-Stage 8). Runs one locked RDR's implementation launch + triage as a single
-**walk-away** session: invoke it, leave the terminal, return to a
-completed implementation on an isolated branch with its roborev findings
-triaged into kata — left UNMERGED for you to ship.
+Stage 8). Runs one locked RDR, or a coupled set of locked RDRs that must
+be implemented together, as a single **walk-away** session: invoke it,
+leave the terminal, return to a completed implementation on one isolated
+branch with its roborev findings triaged into kata — left UNMERGED for you
+to ship.
 
 Relation to `/rdr-implement`: both dispatch into the same launch.md
-orchestrator (Stage 8). `/rdr-implement` is the **attended, solo** path —
+orchestrator (Stage 8). `/rdr-implement` is the **attended** path —
 it stops for a genuine author decision and ends at the green branch with no
 roborev step. This skill is the **unattended** path — it records author
 decisions as deviations and continues, then chains `/roborev-triage` on the
 COMPLETE branch. Same implementation phase, with triage bolted on and no
 human in the loop.
+
+**Coupled RDRs are first-class.** If two or more `<RDR_PATH>` arguments are
+given, the first is the **primary** RDR and the rest are companions. The
+run creates exactly one worktree, one branch, one implementation commit
+stream, one roborev triage pass, and one optional ship. The launch and
+triage briefs carry the full ordered RDR list; every phase treats the
+combined REQ set as the implementation surface, not as independent serial
+runs. Never silently drop companion RDRs by running only the first path.
 
 **Flat — the parent is the orchestrator.** It creates the worktree, then
 plays launch.md's orchestrator role directly, spawning each phase sub-agent
@@ -43,11 +52,12 @@ bounded Phase-2 triage step.
 ## Usage
 
 ```
-/rdr-implement-triage <RDR_PATH>                 # paste the launch prompt below the command
-/rdr-implement-triage <RDR_PATH> @<PROMPT_PATH>  # or read it from a file
-/rdr-implement-triage <RDR_PATH> --ship          # build+triage, then land the branch to main (no docs/kata/flight)
-/rdr-implement-triage <RDR_PATH> --close-and-flight  # …and flip RDR+indexes, close tracker, flight the bug children
-/rdr-implement-triage --resume <RDR_PATH>
+/rdr-implement-triage <RDR_PATH>                         # paste the launch prompt below the command
+/rdr-implement-triage <RDR_PATH> @<PROMPT_PATH>          # or read it from a file
+/rdr-implement-triage <RDR1> <RDR2> [<RDR3>...]          # coupled implementation in one branch
+/rdr-implement-triage <RDR_PATH...> --ship               # build+triage, then land the branch to main (no docs/kata/flight)
+/rdr-implement-triage <RDR_PATH...> --close-and-flight   # …and flip RDR+indexes, close tracker(s), flight bug children
+/rdr-implement-triage --resume <RDR_PATH...>
 ```
 
 **Landing flags (both default OFF — bare behavior is unchanged).** They
@@ -63,7 +73,7 @@ the branch unmerged.
   `§land-rdr-docs` (one `docs(rdr)` commit on `the configured RDR docs branch`:
   Status→Implemented + README row + conditional matrix), `§land-kata-close`
   (close the `kind:rdr-tracked` tracker with typed evidence), and
-  `§land-flight` (`/kata-flight --label batch:rdr-<NNNN> --drain` at top
+  `§land-flight` (`/kata-flight --label <BATCH_LABEL> --drain` at top
   level, output to `<ART_DIR>/flight.md`, digest only).
 
 The ladder: bare (build+triage, stop on branch) → `--ship` (… + land to
@@ -74,7 +84,9 @@ that is the token/wall-clock win over invoking `/rdr-implement-land`
 separately. (The standalone `/rdr-implement-land` exists for landing a
 branch from a *cold* start, e.g. after the attended `/rdr-implement`.)
 
-- `<RDR_PATH>` — the locked RDR, e.g. `cli/0037-materialize-policy.md`.
+- `<RDR_PATH...>` — one locked RDR, or an ordered coupled set, e.g.
+  `cli/0081-foo.md cli/0092-bar.md`. The first path is primary and names
+  shared artifacts; companions are not optional context.
 - **Launch prompt** `LAUNCH_PROMPT` — a path by default; precedence: inline
   body > `@<PROMPT_PATH>` > engine default.
   - **Default:** `/rdr-implement --launch-prompt-path` (the engine owns where
@@ -85,23 +97,26 @@ branch from a *cold* start, e.g. after the attended `/rdr-implement`.)
   - **Inline body** overrides both — freezes it into the session against the
     file moving mid-run, at the cost of the body in orchestrator context.
 
-Derived: `SLUG` = RDR basename without `.md`; `<art>` = the directory
-beside the RDR named `SLUG` (launch.md's rule); `{RDR_RESOURCES}` =
+Derived: `RDR_PATHS` = ordered input list; `PRIMARY_RDR_PATH` = first
+entry; `NNNN_LIST` = each 4-digit RDR number; `SLUG` = primary RDR basename
+without `.md`; `<art>` = the directory beside the primary RDR named `SLUG`
+(launch.md's rule); `COMPANION_ART_DIRS` = companion artifact dirs by the
+same rule; `{RDR_RESOURCES}` =
 `<KATA_FLIGHT_CONTEXT_ROOT>/context/rdr-resources.md` (absolute — see pre-flight gate 1;
 the worktree has no `_rdr/`, so resources live in the configured Kata Flight context root
-repo); `BATCH_LABEL` = `batch:<SHORT_ID>` (`batch:rdr-<NNNN>`; namespaced
-per the consumer label vocabulary reference)
-— the RDR-scoped key every kata this run files carries, so a later
-`/kata-flight --label batch:rdr-<NNNN> --drain` re-sweeps **only** this RDR's
-children (the dated `batch:roborev-<date>` default collides across
-same-day runs).
+repo); `SHORT_ID` = `rdr-<NNNN>` for one RDR, `rdr-<NNNN>-<MMMM>` for two
+RDRs, and `rdr-<first>-plus<N>` for three or more; `BATCH_LABEL` =
+`batch:<SHORT_ID>` (namespaced per the consumer label vocabulary
+reference) — the run-scoped key every kata this run files carries, so a
+later `/kata-flight --label <BATCH_LABEL> --drain` re-sweeps **only** this
+implementation's children. Single-RDR labels remain `batch:rdr-<NNNN>`.
 
 ## Parameters (consumed by worktree-ship-pipeline isolation anchors)
 
 | Parameter | Value |
 |---|---|
-| `WORK_SOURCE` | `LAUNCH_PROMPT` (engine path from `/rdr-implement --launch-prompt-path`, or `@<PROMPT_PATH>`, or an inline body) run against `<RDR_PATH>` |
-| `SHORT_ID` | `rdr-<NNNN>` (from `SLUG`) |
+| `WORK_SOURCE` | `LAUNCH_PROMPT` (engine path from `/rdr-implement --launch-prompt-path`, or `@<PROMPT_PATH>`, or an inline body) run against ordered `RDR_PATHS` |
+| `SHORT_ID` | `rdr-<NNNN>` for one RDR; `rdr-<NNNN>-<MMMM>` for two; `rdr-<first>-plus<N>` for three or more |
 | `BRANCH` | `worktree-<SHORT_ID>` |
 | `WORKTREE_PATH` | `.claude/worktrees/<SHORT_ID>` |
 | `TARGET_BRANCH` | `$(git branch --show-current)` captured at preflight |
@@ -141,6 +156,10 @@ same-day runs).
   (preferred) or read from a path at runtime. The RDR docs repo gains no
   dependency on the consumer repository tooling.
 - **Triage only on COMPLETE.** A halted launch is not triaged.
+- **Coupled means atomic.** For multi-RDR input, do not create one worktree
+  per RDR and do not implement them serially. Any launch blocker halts the
+  coupled run; triage, ship, docs, tracker close, and flight all see the
+  same combined branch and `BATCH_LABEL`.
 
 ## Flow (runs start-to-finish without pausing)
 
@@ -202,12 +221,16 @@ Per `§preflight-shared` (gate 0 §repo-anchor first), plus RDR gating:
    is executable, and contains `roborev`. If not → refuse with
    `stopped:worktree-autoreview-unconfirmed` (else triage would silently find
    zero findings). Do not edit git config to fix it — surface it.
-3. `<RDR_PATH>` exists; read its `**Predecessors**:` field (one
-   comma-separated line, may end with a period; absent → skip). Per entry,
+3. Every input `<RDR_PATH>` exists. For each RDR, read its
+   `**Predecessors**:` field (one comma-separated line, may end with a
+   period; absent → skip). Per entry,
    take the leading `cli/MMMM` ref (ignore any `(…)` gloss) and resolve its
    RDR via `<rdr-dir>/MMMM-*.md`. **The predecessor RDR is the source of
    truth:** accept iff its `- **Status**:` line reads `Implemented` or
-   `Final`; else (`Draft`, missing RDR, …) refuse, naming it. Do **not**
+   `Final`; else (`Draft`, missing RDR, …) refuse, naming it. In a coupled
+   run, a predecessor that is also in `RDR_PATHS` is allowed only if the
+   RDR text records that coupled implement-ordering constraint; otherwise
+   refuse `stopped:unimplemented-predecessor:<ref>`. Do **not**
    gate on the predecessor's `status.md` — that launch-flow scaffolding may
    be absent (pre-convention RDRs) or formatted differently, and says
    nothing about whether the RDR is done. (RDRs live in the RDR docs repo,
@@ -238,7 +261,8 @@ Per `§phase-1b-worktree-creation` (`SHORT_ID` names the worktree):
 
 The parent **is** the orchestrator — it does not wrap the launch in a
 sub-agent. It drives `LAUNCH_PROMPT` (the engine path from gate 5, or an
-inline body; `{RDR_PATH}` = `<RDR_PATH>`, `{RDR_RESOURCES}` =
+inline body; `{RDR_PATHS}` = ordered input list,
+`{PRIMARY_RDR_PATH}` = first input, `{RDR_RESOURCES}` =
 `<KATA_FLIGHT_CONTEXT_ROOT>/context/rdr-resources.md`, absolute). Each phase brief carries
 the path; the phase sub-agent Reads it (the parent never loads the body):
 
@@ -264,7 +288,8 @@ the path; the phase sub-agent Reads it (the parent never loads the body):
   commits land on `<BRANCH>`.
 
   `§scope-discipline` applies with one reframe: a launch phase's "unit
-  of work" is the RDR's REQ set for that phase, not a single named
+  of work" is the RDR's REQ set for that phase, or the combined REQ set
+  for a coupled run, not a single named
   file — so the in-scope surface is wider than a kata's. Both standing
   rules still hold (never-weaken-an-unrelated-test → a pre-existing
   failure outside the RDR's surface is a recorded deviation, not an
@@ -298,9 +323,11 @@ Load-bearing rules the parent enforces across the phases:
   the governing RDR + `{RDR_RESOURCES}` first. Reinforces launch.md's own
   rigor; doesn't replace its phase content.
 - **RDR-scoped kata label:** any kata a phase files (implementer-surfaced
-  bug / rdr-seed) carries `src:roborev` + `<BATCH_LABEL>` (= `batch:rdr-<NNNN>`) —
-  the phase brief states this. Same key triage uses, so one
-  `/kata-flight --label batch:rdr-<NNNN>` ships everything this run produced.
+  bug / rdr-seed) carries `src:roborev` + `<BATCH_LABEL>` (single RDR:
+  `batch:rdr-<NNNN>`; coupled: `batch:rdr-<NNNN>-<MMMM>` or
+  `batch:rdr-<first>-plus<N>`) — the phase brief states this. Same key
+  triage uses, so one `/kata-flight --label <BATCH_LABEL>` ships
+  everything this run produced.
   A filed `type:bug` is also stamped `lifecycle:filed` (in the backlog,
   not yet triaged-ready; `lifecycle:*` is single-valued — triage replaces
   it with `lifecycle:queued` when it deems the kata drainable); a
@@ -337,16 +364,16 @@ agree with the outcome). Then:
 
 ## Phase 2 — Triage (parent invokes /roborev-triage directly; only on COMPLETE)
 
-The parent invokes `/roborev-triage <RDR_PATH> --batch-label <BATCH_LABEL>`
+The parent invokes `/roborev-triage <RDR_PATH...> --batch-label <BATCH_LABEL>`
 **directly via the Skill tool** — not wrapped in a sub-agent (its own
 per-finding sub-agents must dispatch from the top level). `--batch-label
-<BATCH_LABEL>` (= `batch:rdr-<NNNN>`) overrides triage's dated default so its
-katas carry the RDR-scoped key, not a same-day-colliding one. Triage is
+<BATCH_LABEL>` overrides triage's dated default so its katas carry the
+run-scoped RDR key, not a same-day-colliding one. Triage is
 already unattended and worktree-aware: collects the per-commit
-auto-reviews, grounds each against the RDR + `{RDR_RESOURCES}`, routes to
-drop/fix-now/kata-bug/rdr-seed, files self-contained kata (baking any
-unresolved question into the body), commits FIX-NOW edits on `<BRANCH>`,
-never asks. Pass no merge instruction.
+auto-reviews, grounds each against all `RDR_PATHS` + `{RDR_RESOURCES}`,
+routes to drop/fix-now/kata-bug/rdr-seed, files self-contained kata
+(baking any unresolved question into the body), commits FIX-NOW edits on
+`<BRANCH>`, never asks. Pass no merge instruction.
 
 Because `/roborev-triage` freezes `HEAD`/`BASE` from **cwd**, the parent
 `cd`s into `<WORKTREE_PATH>` for this step (then back to `TARGET_BRANCH`
@@ -354,7 +381,7 @@ primary after) — the one bounded exception to parent-stays-out. Re-run the
 `§worktree-isolation-gate` after the `cd`, before invoking the skill;
 isolation failure → `stopped:worktree-isolation-failed`, leave worktree
 intact. The parent surfaces triage's report block (counts + the
-`<BATCH_LABEL>` = `batch:rdr-<NNNN>` batch label) verbatim in the final report.
+`<BATCH_LABEL>` batch label) verbatim in the final report.
 
 ## Phase 2 gate (parent; read-only)
 
@@ -367,7 +394,7 @@ intact. The parent surfaces triage's report block (counts + the
 
 Cite [`lib-land-rdr`](../lib-land-rdr/SKILL.md) **§land-ship** —
 **read it first.** Thread its inputs from the warm context (`REPO_ROOT`,
-`WORKTREE_PATH`, `BRANCH`, `TARGET_BRANCH`, `RDR_PATH`, `merged_sha`
+`WORKTREE_PATH`, `BRANCH`, `TARGET_BRANCH`, `RDR_PATHS`, `merged_sha`
 captured here). The parent spawns the single ship sub-agent
 (`§phase-3-ship-agent`): rebase-if-`TARGET_BRANCH`-moved →
 `go test && golangci-lint` on the rebased tip → squash → `merge
@@ -384,26 +411,27 @@ ship → final report (the RDR/kata/flight steps are intentionally skipped).
 
 Runs only after a clean Phase 3 ship. Cite `lib-land-rdr` **§land-rdr-docs
 → §land-kata-close → §land-flight** in order, threading the warm inputs
-(`PROCESS_ROOT`, `NNNN`, `SLUG`, `ART_DIR`, `BATCH_LABEL`, `merged_sha`):
+(`PROCESS_ROOT`, `RDR_PATHS`, `NNNN_LIST`, `SLUGS`, `ART_DIRS`,
+`BATCH_LABEL`, `merged_sha`):
 
-1. **§land-rdr-docs** — spawn the docs sub-agent: one `docs(rdr): <NNNN>
-   implemented (consumer-repo <merged_sha>)` commit on `the configured RDR docs branch` flipping the
-   RDR `Status` → `Implemented`, the README index row, and (only if a
-   matching cell exists) the matrix; stage the artifacts. Never touches
+1. **§land-rdr-docs** — spawn the docs sub-agent: one `docs(rdr): <SHORT_ID>
+   implemented (consumer-repo <merged_sha>)` commit on `the configured RDR docs branch` flipping each
+   RDR `Status` → `Implemented`, each README index row, and each matching
+   matrix cell; stage every artifacts dir. Never touches
    `rdr-resources.md`. `stopped:process-wrong-branch` /
-   `readme-row-missing` → halt with the named reason (code is merged; the
-   docs flip is incomplete — recoverable + forward-idempotent per the lib
-   Failure ladder).
+   `readme-row-missing:<NNNN>` → halt with the named reason (code is
+   merged; the docs flip is incomplete — recoverable + forward-idempotent
+   per the lib Failure ladder).
 2. **§land-kata-close** — bounded parent step (`cwd` = `REPO_ROOT`; `kata`
-   binds project by cwd): close the `kind:rdr-tracked` tracker
+   binds project by cwd): close every `kind:rdr-tracked` tracker
    (`tracks: cli/<NNNN>`) with typed evidence citing `<merged_sha>`
    (`kata close <id> --done --commit <merged_sha> --evidence test:… --message
    "<≥40>"`); leave the `<BATCH_LABEL>` bug children open; report the
-   open-children count.
+   open-children count for `<BATCH_LABEL>`.
 3. **§land-flight** — 0 open children → `flight: nothing-to-drain`. Else
-   invoke `/kata-flight --label batch:rdr-<NNNN> --drain` **at the top
+   invoke `/kata-flight --label <BATCH_LABEL> --drain` **at the top
    level** (it fans out its own ship agents), redirect its output to
-   `<ART_DIR>/flight.md`, read back only a ≤200-word digest.
+   the primary `<ART_DIR>/flight.md`, read back only a ≤200-word digest.
 
 ## Final report, then STOP
 
@@ -413,7 +441,7 @@ branch is merged + torn down by Phase 3 and the report reflects the
 landing.
 
 ```
-rdr-implement-triage: <RDR_PATH>   [mode: build-only | --ship | --close-and-flight]
+rdr-implement-triage: <RDR_PATH...>   [mode: build-only | --ship | --close-and-flight]
   launch:   complete | incomplete(<blocker>)
   open author-decision deviations: <n>   (<art>/deviations.md)
   triage:   <roborev-triage's report block, incl. the batch label>   (omitted if incomplete)
@@ -421,8 +449,8 @@ rdr-implement-triage: <RDR_PATH>   [mode: build-only | --ship | --close-and-flig
   # build-only (no landing flag):
   worktree: <WORKTREE_PATH>   branch: <BRANCH>   (intact, UNMERGED)
   to land:  review <art>/triage.md + filed kata, then
-            /rdr-implement-land <RDR_PATH>   (or your normal ship flow);
-            /kata-flight --label batch:rdr-<NNNN> --drain for the bug children
+            /rdr-implement-land <RDR_PATH...>   (or your normal ship flow);
+            /kata-flight --label <BATCH_LABEL> --drain for the bug children
             (RDR-scoped key; standing ship-ready queue is `kata ready --label lifecycle:queued`).
 
   # --ship / --close-and-flight (the landing tail ran — lib-land-rdr Composite report):
@@ -434,9 +462,10 @@ rdr-implement-triage: <RDR_PATH>   [mode: build-only | --ship | --close-and-flig
 
 ## Resume
 
-Per `§resume-mechanics`. `--resume <RDR_PATH>`:
+Per `§resume-mechanics`. `--resume <RDR_PATH...>`:
 
-1. Locate the worktree via `git worktree list` for `worktree-<SHORT_ID>`.
+1. Recompute `SHORT_ID` from the ordered RDR list, then locate the
+   worktree via `git worktree list` for `worktree-<SHORT_ID>`.
    Worktree gone but branch exists → re-attach (parent, worktree-only):
    `git worktree add .claude/worktrees/<SHORT_ID> worktree-<SHORT_ID>`.
    Both gone → refuse.
@@ -503,6 +532,6 @@ Per `§resume-mechanics`. `--resume <RDR_PATH>`:
   mirrors.
 - `/roborev-triage` — the Phase-2 chained triage (unattended).
 - `/kata-ship`, `/kata-flight` — the same thin-orchestrator mold; ship the
-  filed `batch:rdr-<NNNN>` `type:bug` children once you're back.
+  filed `<BATCH_LABEL>` `type:bug` children once you're back.
 - `git worktree add` (raw Bash, no `EnterWorktree`) — parent-only
   (§phase-1b-worktree-creation); sub-agents `cd` in instead.

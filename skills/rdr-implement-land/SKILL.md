@@ -1,15 +1,15 @@
 ---
 name: rdr-implement-land
-argument-hint: <RDR_PATH> [--no-flight]
-description: 'Use to land a built but unmerged RDR implementation branch: rebase, fast-forward merge, update RDR status/indexes, close tracker, and optionally flight follow-up katas. Trigger for land RDR implementation.'
+argument-hint: <RDR_PATH...> [--no-flight]
+description: 'Use to land a built but unmerged RDR implementation branch: rebase, fast-forward merge, update RDR status/indexes, close tracker(s), and optionally flight follow-up katas. Trigger for land RDR implementation.'
 ---
 
 # rdr-implement-land
 
 The **landing** half of RDR Stage 8. Where `/rdr-implement` and
 `rdr-implement-triage` *build* the implementation onto an isolated
-`worktree-rdr-<NNNN>` branch and **stop before merge**, this skill takes
-that branch the rest of the way to `Implemented`:
+`worktree-rdr-<NNNN>` or coupled RDR branch and **stop before merge**,
+this skill takes that branch the rest of the way to `Implemented`:
 
 ```
 ship (rebase→ff-merge→teardown) → flip RDR + indexes → close tracker → flight residual bugs
@@ -27,20 +27,20 @@ fork.
 (which run inside the warm build orchestrator), this skill re-derives
 its inputs from disk, so it lands a branch from a cold start — including
 one left by the **attended** `/rdr-implement` (no triage, no warm
-context). If `triage` never ran, the `batch:rdr-<NNNN>` set is empty and
+context). If `triage` never ran, the `<BATCH_LABEL>` set is empty and
 §land-flight short-circuits.
 
 ## Usage
 
 ```
-/rdr-implement-land <RDR_PATH>              # land fully: ship → flip → close → flight
-/rdr-implement-land <RDR_PATH> --no-flight  # ship → flip → close, then EMIT the flight command (don't run it)
+/rdr-implement-land <RDR_PATH...>              # land fully: ship → flip → close → flight
+/rdr-implement-land <RDR_PATH...> --no-flight  # ship → flip → close, then EMIT the flight command (don't run it)
 ```
 
-- `<RDR_PATH>` — the implemented RDR, e.g. `cli/0037-materialize-policy.md`
-  (resolves under `$PROCESS_ROOT/rdr/`).
+- `<RDR_PATH...>` — one implemented RDR, or the ordered coupled set that
+  built the branch (resolves under `$PROCESS_ROOT/rdr/`).
 - `--no-flight` — stop after §land-kata-close and print
-  `/kata-flight --label batch:rdr-<NNNN> --drain` as a handoff instead of
+  `/kata-flight --label <BATCH_LABEL> --drain` as a handoff instead of
   running §land-flight inline. Use when you want to eyeball the residual
   bug batch in a separate turn (the historical hand-driven pattern).
 
@@ -83,23 +83,22 @@ halt with its named `stopped:<reason>`.
    [ -d "$PROCESS_ROOT/rdr" ]  || { echo "stopped:process-not-found:$PROCESS_ROOT" >&2; exit 1; }
    ```
    Carry `KATA_FLIGHT_CONTEXT_ROOT`, `PROCESS_ROOT` forward as literals.
-2. **Resolve the RDR + derived inputs.** `<RDR_PATH>` exists under
-   `$PROCESS_ROOT/rdr/`. Derive `NNNN` (4-digit), `SLUG` (basename
-   without `.md`), `ART_DIR = $PROCESS_ROOT/rdr/cli/<SLUG>/`,
-   `BATCH_LABEL = batch:rdr-<NNNN>`.
-3. **RDR is locked + built.** Read the RDR's `- **Status**:` line — it
+2. **Resolve the RDR(s) + derived inputs.** Each `<RDR_PATH>` exists under
+   `$PROCESS_ROOT/rdr/`. Derive `NNNN_LIST`, `SLUGS`, `ART_DIRS`, and
+   `BATCH_LABEL` using the same `SHORT_ID` rule as `rdr-implement-triage`.
+3. **RDR is locked + built.** Read each RDR's `- **Status**:` line — it
    must read `Final` or already `Implemented` (a `Draft` is not
-   landable → refuse `stopped:rdr-not-final`). Read `<ART_DIR>/status.md`
+   landable → refuse `stopped:rdr-not-final:<NNNN>`). Read primary `<ART_DIR>/status.md`
    — it must contain the `COMPLETE` token (anywhere in the header line);
    missing/`INCOMPLETE` → refuse `stopped:implementation-incomplete`
    (the branch isn't built; this skill lands, it does not build).
 4. **The branch exists and is unmerged.**
-   `git -C "$REPO_ROOT" worktree list` shows `worktree-rdr-<NNNN>` at
-   `.claude/worktrees/rdr-<NNNN>` (capture `WORKTREE_PATH` absolute,
+   `git -C "$REPO_ROOT" worktree list` shows `worktree-<SHORT_ID>` at
+   `.claude/worktrees/<SHORT_ID>` (capture `WORKTREE_PATH` absolute,
    `BRANCH`). If the worktree is gone but the branch exists →
    re-attach (`git -C "$REPO_ROOT" worktree add
-   "$REPO_ROOT/.claude/worktrees/rdr-<NNNN>" worktree-rdr-<NNNN>`).
-   Both gone but `<RDR_PATH>` already `Implemented` and the
+   "$REPO_ROOT/.claude/worktrees/<SHORT_ID>" worktree-<SHORT_ID>`).
+   Both gone but every `<RDR_PATH>` is already `Implemented` and the
    `<ART_DIR>` shows a recorded merge → **already landed**; report and
    stop (idempotent). Branch missing with `Status: Final` and no merge
    record → refuse `stopped:no-branch-to-land` (nothing built to land).
@@ -114,19 +113,19 @@ halt with its named `stopped:<reason>`.
    Capture `merged_sha`. Any `stopped:*` → **halt the landing**, leave
    the worktree intact, surface the reason. (A green rebased tip is the
    only gate — a triage fix-now commit ships if green.)
-2. **§land-rdr-docs** — spawn the docs agent: one `docs(rdr): <NNNN>
+2. **§land-rdr-docs** — spawn the docs agent: one `docs(rdr): <SHORT_ID>
    implemented (consumer-repo <merged_sha>)` commit on `the configured RDR docs branch` flipping
-   Status + README row + (conditional) matrix cell, staging the
+   Status + README row(s) + (conditional) matrix cell(s), staging the
    artifacts. `stopped:process-wrong-branch` / `readme-row-missing` →
    halt with the named reason (code is merged; the docs flip is
    incomplete — recoverable per the lib Failure ladder).
 3. **§land-kata-close** — bounded parent step: close the
-   `kind:rdr-tracked` tracker (`tracks: cli/<NNNN>`) with typed evidence
+   `kind:rdr-tracked` tracker(s) (`tracks: cli/<NNNN>`) with typed evidence
    citing `<merged_sha>`; leave the `<BATCH_LABEL>` children open;
    report the open-children count.
 4. **§land-flight** — if 0 open children → `flight: nothing-to-drain`.
    Else, **unless `--no-flight`**, invoke `/kata-flight --label
-   batch:rdr-<NNNN> --drain` at the top level, output to
+   <BATCH_LABEL> --drain` at the top level, output to
    `<ART_DIR>/flight.md`, read back a ≤200-word digest. With
    `--no-flight`, skip the run and emit the command as a handoff.
 
@@ -135,12 +134,12 @@ Assemble and print the lib's **Composite final report**, then STOP.
 ## Final report
 
 ```
-rdr-implement-land: <RDR_PATH>
+rdr-implement-land: <RDR_PATH...>
   ship:    shipped <merged_sha> | stopped:<reason>
   rdr:     Status→Implemented · README✓ · matrix:<edited|none>   (docs <docs_sha> on the configured RDR docs branch)
-  kata:    tracker <closed <short_id>|already-closed|none>
+  kata:    tracker(s) <closed <short_id>|already-closed|none>
   flight:  nothing-to-drain | drained <n>/<m> (<k> held)   (<ART_DIR>/flight.md)
-           [--no-flight: handoff → /kata-flight --label batch:rdr-<NNNN> --drain]
+           [--no-flight: handoff → /kata-flight --label <BATCH_LABEL> --drain]
 ```
 
 ## Failure modes

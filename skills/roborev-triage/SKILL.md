@@ -1,18 +1,21 @@
 ---
 name: roborev-triage
-argument-hint: <RDR_PATH> [--batch-label <key>]
-description: 'Use after an RDR implementation launch leaves open roborev findings. Single-pass unattended triage routes findings to drop, fix-now, kata-bug, or rdr-seed. Trigger for roborev triage after launch.'
+argument-hint: <RDR_PATH...> [--batch-label <key>]
+description: 'Use after an RDR implementation launch leaves open roborev findings. Single-pass unattended triage routes findings to drop, fix-now, kata-bug, or rdr-seed, grounded against one or more coupled RDRs. Trigger for roborev triage after launch.'
 ---
 
 # roborev-triage
 
 Single-pass, **unattended** triage of the roborev findings left after an
 RDR implementation launch. Replaces `/roborev-refine` after launch.
+Accepts either one RDR or an ordered coupled set implemented in the same
+branch; in a coupled run every finding is grounded against the full set,
+not only the first RDR.
 
 Two design choices, each fixing a flap cause: (1) **no loop** — the refine
 loop is the flap engine (a moving `merge-base..HEAD` range re-flags main's
 own merged fixes), so triage reads immutable per-commit diffs once; (2)
-**ground each finding** against the RDR + `{RDR_RESOURCES}` that roborev's
+**ground each finding** against the RDR set + `{RDR_RESOURCES}` that roborev's
 repo-sandboxed prompt never sees (else it reverses RDR-adjudicated
 decisions, re-raises scoped-out work, or rates severity by code shape not
 reachability). Every finding's fate is decided from evidence; anything
@@ -22,20 +25,26 @@ never stops to ask.
 ## Usage
 
 ```
-/roborev-triage <RDR_PATH>                       # e.g. cli/0037-materialize-policy.md
-/roborev-triage <RDR_PATH> --batch-label <key>   # caller-supplied batch key (e.g. rdr-implement-triage)
+/roborev-triage <RDR_PATH>                         # e.g. cli/0037-materialize-policy.md
+/roborev-triage <RDR1> <RDR2> [<RDR3>...]          # coupled implementation
+/roborev-triage <RDR_PATH...> --batch-label <key>  # caller-supplied batch key (e.g. rdr-implement-triage)
 ```
 
-`<RDR_PATH>` is the required input. Derived:
+`<RDR_PATH...>` is the required ordered input. The first path is primary;
+the remaining paths are companions. Derived:
 
-- `<art>` = the directory beside the RDR named after its basename without
-  `.md` (launch.md's rule); holds `req-list.md`, `deviations.md`,
-  `status.md`, `coverage.md`, `verification.md`.
+- `<art>` = the directory beside the primary RDR named after its basename
+  without `.md` (launch.md's rule); holds `req-list.md`, `deviations.md`,
+  `status.md`, `coverage.md`, `verification.md`, and `triage.md`.
+- `COMPANION_ART_DIRS` = each companion RDR's artifact directory by the
+  same rule. Grounding sub-agents read companion `req-list.md`,
+  `deviations.md`, `coverage.md`, and `verification.md` when present.
 - `BATCH_LABEL` = `--batch-label <key>` if given, else
   `batch:roborev-<YYYYMMDD>` (Phase 0 step 4; namespaced per
   the consumer label vocabulary reference). A caller that drives
-  triage per-RDR (notably `/rdr-implement-triage`, which passes
-  `rdr-<NNNN>`) supplies a key unique to that run so a later
+  triage per run (notably `/rdr-implement-triage`, which passes
+  `batch:rdr-<NNNN>` for one RDR or a coupled key such as
+  `batch:rdr-0081-0092`) supplies a key unique to that run so a later
   `/kata-flight --label <key> --drain` re-sweeps **only** that run's
   children — the dated default collides across same-day runs. The key
   replaces the dated label; the `roborev` source label is always added
@@ -88,10 +97,12 @@ EXPECTED_REPO_BASENAME="${KATA_FLIGHT_EXPECTED_REPO_BASENAME:-$(basename "$PRIMA
    `[ -d "$KATA_FLIGHT_CONTEXT_ROOT" ] || { echo "stopped:context-root-not-found:$KATA_FLIGHT_CONTEXT_ROOT" >&2; exit 1; }`
 2. Freeze once: `HEAD=$(git rev-parse HEAD)`,
    `BASE=$(git merge-base main HEAD)`.
-3. Read only the header of `<art>/status.md` (match the `COMPLETE` token
-   anywhere in the line, not only leading — it may be a `# Status … COMPLETE`
-   heading). No `COMPLETE` token or missing → proceed, flag in the report
-   (advisory only; never a refusal).
+3. Read only the header of every available `<art>/status.md` (primary and
+   companions; match the `COMPLETE` token anywhere in the line, not only
+   leading — it may be a `# Status … COMPLETE` heading). No `COMPLETE`
+   token or missing → proceed, flag in the report (advisory only; never a
+   refusal). In coupled mode, the primary status is authoritative for the
+   shared launch; companion status files are advisory if absent.
 4. Resolve `BATCH_LABEL` (the `kata-flight` handoff key): the
    `--batch-label <key>` value if the caller passed one, else
    `batch:roborev-<YYYYMMDD>` from the harness `currentDate` (never
@@ -131,8 +142,8 @@ never spawning further agents. Self-contained brief (≤200 words), no
 shared context:
 
 - The finding row.
-- `<RDR_PATH>`, `<art>/deviations.md`, `<art>/req-list.md` (the launch's
-  own adjudications + REQ quotes).
+- `RDR_PATHS`, `<art>/deviations.md`, `<art>/req-list.md`, and any
+  companion artifact files (the launch's own adjudications + REQ quotes).
 - `{RDR_RESOURCES}` (absolute `$KATA_FLIGHT_CONTEXT_ROOT/rdr/evidence/...` — the worktree
   has no `_rdr/`, so read from `$KATA_FLIGHT_CONTEXT_ROOT`) — the grounding roborev
   lacked. Search via
@@ -151,7 +162,7 @@ The sub-agent **ultrathinks** and returns exactly one verdict:
   — cite the guarding invariant) · `over-engineering` (defense-in-depth
   for a hypothetical — cite `docs/principles.md`).
 - **FIX-NOW** — contained, unambiguous, data-safety/security, clearly
-  in-this-RDR's-scope, cheap. Deliberately narrow. If the fix proves
+  in-this-RDR-set's scope, cheap. Deliberately narrow. If the fix proves
   non-trivial mid-edit, it **downgrades to KATA-BUG** rather than ask.
 - **KATA-BUG** — a contained, testable defect (red/green pair writable),
   in project scope but out of this RDR's scope or deferred. Returns
@@ -220,7 +231,9 @@ self-contained.
      deems it drainable; `lifecycle:*` is single-valued — this *is* its
      state, no prior `filed` to replace); a `kind:rdr-seed` gets **no**
      `lifecycle:*` (it exits to RDR authoring, not the drain).
-     `--related <RDR ref>`. Set `--priority` whenever you set a
+     `--related <RDR ref>` for every input RDR materially implicated by
+     the finding; if unsure in a coupled run, relate it to all `RDR_PATHS`.
+     Set `--priority` whenever you set a
      `severity:` label, per the `severity:` → priority table in
      the consumer label vocabulary reference (severity × reachability;
      0 = highest; reserve 0–1 for live data-safety/security).
@@ -237,7 +250,7 @@ self-contained.
 ## Phase 5 — Report
 
 ```
-triage: <RDR_PATH> @ <HEAD short>  (base <BASE short>)  batch: <BATCH_LABEL>
+triage: <RDR_PATH...> @ <HEAD short>  (base <BASE short>)  batch: <BATCH_LABEL>
   findings: <total>  (spine <n>  range-net <m>  deduped <d>)
   dropped:  <count>  superseded=<n> rdr-adjudicated=<n> scoped-out=<n> unreachable=<n> over-eng=<n>
   fixed-now: <id>=<sha> …       (committed inline; ↳<short_id> = fix-commit review filed a follow-up)
