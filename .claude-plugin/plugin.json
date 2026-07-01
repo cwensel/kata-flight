@@ -1,7 +1,7 @@
 {
   "name": "kata-flight",
   "description": "Kata Flight — skill-driven kata issue shipping with roborev review handling and optional RDR process binding. Ships the /kata-* and /roborev-* wrapper skills plus RDR binding skills for projects that use an external RDR process.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "Chris K Wensel",
     "email": "chris@wensel.net"
